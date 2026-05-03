@@ -571,7 +571,6 @@ mark { background: rgba(184,85,64,.18); color: inherit; padding: 0 2px; border-r
     <div class="pdf-banner" id="pdfBanner" style="display:none">
       <span class="ok">✓</span>
       <span class="file-name" id="pdfFileName">Handboek geladen</span>
-      <button class="link-btn" id="changePdfBtn" type="button">vervangen</button>
       <input type="file" accept="application/pdf" id="pdfInputChange" style="display:none">
     </div>
     <div class="settings-menu" id="settingsMenu">
@@ -1199,7 +1198,9 @@ function showSign(item, cat, refIdx = 0) {
     return;
   }
   $('viewerControls').style.display = '';
-  renderPDFPage(bookToPdf(ref.from));
+  const pdfFrom = bookToPdf(ref.from);
+  const pdfTo   = ref.to ? bookToPdf(ref.to) : pdfFrom;
+  renderPDFRange(pdfFrom, pdfTo);
 }
 
 function updateViewerStrip(item) {
@@ -1239,36 +1240,44 @@ function showSignInfo(item) {
 }
 
 async function renderPDFPage(pageNum) {
+  await renderPDFRange(pageNum, pageNum);
+}
+
+async function renderPDFRange(fromPage, toPage) {
   if (!state.pdfDoc) return;
-  pageNum = Math.max(1, Math.min(pageNum, state.pdfDoc.numPages));
-  state.currentPage = pageNum;
+  fromPage = Math.max(1, Math.min(fromPage, state.pdfDoc.numPages));
+  toPage   = Math.max(fromPage, Math.min(toPage || fromPage, state.pdfDoc.numPages));
+  state.currentPage = fromPage;
 
   const frame = $('viewerFrame');
-  let canvas = frame.querySelector('.pdf-canvas');
-  if (!canvas) {
-    frame.innerHTML = '';
-    canvas = document.createElement('canvas');
-    canvas.className = 'pdf-canvas';
-    frame.appendChild(canvas);
-  }
-  canvas.classList.add('loading');
+  frame.innerHTML = '';
 
-  const page = await state.pdfDoc.getPage(pageNum);
-  const baseVp = page.getViewport({ scale: 1 });
-  const fitScale = Math.min(2.5, (frame.clientWidth - 48) / baseVp.width);
-  const vp = page.getViewport({ scale: fitScale * state.zoom });
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.floor(vp.width * dpr);
-  canvas.height = Math.floor(vp.height * dpr);
-  canvas.style.width = Math.floor(vp.width) + 'px';
-  canvas.style.height = Math.floor(vp.height) + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  await page.render({ canvasContext: ctx, viewport: vp }).promise;
-  canvas.classList.remove('loading');
+  const frameW = frame.clientWidth - 48;
+
+  for (let p = fromPage; p <= toPage; p++) {
+    const page = await state.pdfDoc.getPage(p);
+    const baseVp = page.getViewport({ scale: 1 });
+    const fitScale = Math.min(2.5, frameW / baseVp.width);
+    const vp = page.getViewport({ scale: fitScale * state.zoom });
+    const dpr = window.devicePixelRatio || 1;
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'pdf-canvas';
+    if (p < toPage) canvas.style.marginBottom = '16px';
+    canvas.width  = Math.floor(vp.width  * dpr);
+    canvas.height = Math.floor(vp.height * dpr);
+    canvas.style.width  = Math.floor(vp.width)  + 'px';
+    canvas.style.height = Math.floor(vp.height) + 'px';
+    frame.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  }
+
   $('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
-  $('prevPage').disabled = pageNum <= 1;
-  $('nextPage').disabled = pageNum >= state.pdfDoc.numPages;
+  $('prevPage').disabled = fromPage <= 1;
+  $('nextPage').disabled = toPage >= state.pdfDoc.numPages;
 }
 
 // ══════════════════════════════════════════════
@@ -1536,8 +1545,10 @@ $('pageRefStrip').addEventListener('click', e => {
   if (!found) return;
   state.activeRefIdx = refIdx;
   const ref = found.item.pages[refIdx];
-  if (ref && state.pdfDoc && ref.from <= state.pdfDoc.numPages) {
-    renderPDFPage(bookToPdf(ref.from));
+  if (ref && state.pdfDoc && bookToPdf(ref.from) <= state.pdfDoc.numPages) {
+    const pdfFrom = bookToPdf(ref.from);
+    const pdfTo   = ref.to ? bookToPdf(ref.to) : pdfFrom;
+    renderPDFRange(pdfFrom, pdfTo);
     updateViewerStrip(found.item);
     renderIndex();
   }
@@ -1701,10 +1712,21 @@ function showChangePwModal() {
 }
 
 // pdf controls
+function reRenderCurrentRef() {
+  if (!state.activeSignId) return;
+  const found = findSign(state.activeSignId);
+  if (!found) return;
+  const ref = (found.item.pages || [])[state.activeRefIdx];
+  if (!ref || !state.pdfDoc) return;
+  const pdfFrom = bookToPdf(ref.from);
+  const pdfTo   = ref.to ? bookToPdf(ref.to) : pdfFrom;
+  renderPDFRange(pdfFrom, pdfTo);
+}
+
 $('prevPage').addEventListener('click', () => { if (state.pdfDoc && state.currentPage > 1) renderPDFPage(state.currentPage - 1); });
 $('nextPage').addEventListener('click', () => { if (state.pdfDoc && state.currentPage < state.pdfDoc.numPages) renderPDFPage(state.currentPage + 1); });
-$('zoomIn').addEventListener('click', () => { state.zoom = Math.min(2.5, state.zoom + .15); if (state.currentPage) renderPDFPage(state.currentPage); });
-$('zoomOut').addEventListener('click', () => { state.zoom = Math.max(.5, state.zoom - .15); if (state.currentPage) renderPDFPage(state.currentPage); });
+$('zoomIn').addEventListener('click',  () => { state.zoom = Math.min(2.5, state.zoom + .15); reRenderCurrentRef(); });
+$('zoomOut').addEventListener('click', () => { state.zoom = Math.max(.5,  state.zoom - .15); reRenderCurrentRef(); });
 document.addEventListener('keydown', e => {
   if (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
   if (!state.pdfDoc) return;
@@ -1743,6 +1765,17 @@ async function init() {
   migrate(state.data);
   renderIndex();
   await tryAutoLoad();
+  // Select first sign by default
+  selectFirstSign();
+}
+
+function selectFirstSign() {
+  const cat = state.data.categories.find(c => c.items.length > 0);
+  if (!cat) return;
+  const item = cat.items[0];
+  showSign(item, cat, 0);
+  state.activeSignId = item.id;
+  renderIndex();
 }
 
 init();
