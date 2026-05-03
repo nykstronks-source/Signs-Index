@@ -374,11 +374,11 @@ body.edit-mode .add-category-row { display: block; }
 .viewer-frame {
   flex: 1; overflow: auto; padding: 12px;
   display: flex; flex-direction: column; justify-content: center; align-items: center;
-  gap: 12px;
+  gap: 12px; min-height: 0;
   background: radial-gradient(ellipse at top, rgba(255,255,255,.4), transparent 60%), var(--bg-soft);
 }
 .pdf-canvas {
-  height: auto; max-width: 100%;
+  height: auto; max-width: 100%; flex-shrink: 0;
   box-shadow: 0 1px 0 rgba(29,35,51,.04), 0 8px 24px -8px rgba(29,35,51,.18), 0 24px 48px -16px rgba(29,35,51,.12);
   background: white; border-radius: 2px;
 }
@@ -1258,8 +1258,10 @@ async function renderPDFRange(fromPage, toPage) {
 
   const numPages = toPage - fromPage + 1;
   const pad = 24;
-  const frameW = frame.clientWidth  - pad;
-  const frameH = frame.clientHeight - pad;
+  // Use getBoundingClientRect for accurate visible dimensions after clearing content
+  const rect = frame.getBoundingClientRect();
+  const frameW = rect.width  - pad;
+  const frameH = rect.height - pad;
 
   for (let p = fromPage; p <= toPage; p++) {
     const page = await state.pdfDoc.getPage(p);
@@ -1267,12 +1269,12 @@ async function renderPDFRange(fromPage, toPage) {
 
     let fitScale;
     if (numPages === 1) {
-      // Fit entire page in view — constrain by both width and height
-      const scaleByW = frameW  / baseVp.width;
+      // Fit entire page in visible area — constrain by both width and height
+      const scaleByW = frameW / baseVp.width;
       const scaleByH = frameH / baseVp.height;
       fitScale = Math.min(scaleByW, scaleByH) * state.zoom;
     } else {
-      // Multiple pages: fit width, scroll vertically
+      // Multiple pages: fit to width, scroll vertically
       fitScale = (frameW / baseVp.width) * state.zoom;
     }
 
@@ -1772,7 +1774,7 @@ $('pdfInputChange').addEventListener('change', e => { if (e.target.files[0]) han
 $('backBtn').addEventListener('click', () => document.body.classList.remove('viewer-open'));
 
 let _rz;
-window.addEventListener('resize', () => { clearTimeout(_rz); _rz = setTimeout(() => { if (state.currentPage) renderPDFPage(state.currentPage); }, 250); });
+window.addEventListener('resize', () => { clearTimeout(_rz); _rz = setTimeout(() => reRenderCurrentRef(), 200); });
 
 // ══════════════════════════════════════════════
 // MIGRATION (old format → pages array)
