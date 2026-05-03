@@ -1734,7 +1734,7 @@ document.addEventListener('keydown', e => {
   if (e.key==='ArrowRight' && state.currentPage < state.pdfDoc.numPages) renderPDFPage(state.currentPage + 1);
 });
 
-$('changePdfBtn').addEventListener('click', () => $('pdfInputChange').click());
+
 $('pdfInputChange').addEventListener('change', e => { if (e.target.files[0]) handlePDFFile(e.target.files[0]); e.target.value=''; });
 $('backBtn').addEventListener('click', () => document.body.classList.remove('viewer-open'));
 
