@@ -1263,21 +1263,23 @@ async function renderPDFRange(fromPage, toPage) {
   const frameW = rect.width  - pad;
   const frameH = rect.height - pad;
 
+  // Fetch all pages first to compute combined dimensions
+  const pages = [];
   for (let p = fromPage; p <= toPage; p++) {
-    const page = await state.pdfDoc.getPage(p);
-    const baseVp = page.getViewport({ scale: 1 });
+    pages.push(await state.pdfDoc.getPage(p));
+  }
 
-    let fitScale;
-    if (numPages === 1) {
-      // Fit entire page in visible area — constrain by both width and height
-      const scaleByW = frameW / baseVp.width;
-      const scaleByH = frameH / baseVp.height;
-      fitScale = Math.min(scaleByW, scaleByH) * state.zoom;
-    } else {
-      // Multiple pages: fit to width, scroll vertically
-      fitScale = (frameW / baseVp.width) * state.zoom;
-    }
+  const gap = 12; // gap between pages in px
+  const maxW = Math.max(...pages.map(pg => pg.getViewport({scale:1}).width));
+  const totalH = pages.reduce((sum, pg) => sum + pg.getViewport({scale:1}).height, 0)
+               + gap * (numPages - 1);
 
+  // Scale so all pages fit in the visible area (both width and total height)
+  const scaleByW = frameW / maxW;
+  const scaleByH = frameH / totalH;
+  const fitScale = Math.min(scaleByW, scaleByH) * state.zoom;
+
+  for (const page of pages) {
     const vp = page.getViewport({ scale: fitScale });
     const dpr = window.devicePixelRatio || 1;
 
