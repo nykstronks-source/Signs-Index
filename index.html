@@ -372,13 +372,13 @@ body.edit-mode .add-category-row { display: block; }
   font-size: 11.5px; color: var(--ink-soft); pointer-events: none;
 }
 .viewer-frame {
-  flex: 1; overflow: auto; padding: 16px;
-  display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
-  gap: 16px;
+  flex: 1; overflow: auto; padding: 12px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  gap: 12px;
   background: radial-gradient(ellipse at top, rgba(255,255,255,.4), transparent 60%), var(--bg-soft);
 }
 .pdf-canvas {
-  width: 100%; height: auto;
+  height: auto; max-width: 100%;
   box-shadow: 0 1px 0 rgba(29,35,51,.04), 0 8px 24px -8px rgba(29,35,51,.18), 0 24px 48px -16px rgba(29,35,51,.12);
   background: white; border-radius: 2px;
 }
@@ -1256,18 +1256,26 @@ async function renderPDFRange(fromPage, toPage) {
   const frame = $('viewerFrame');
   frame.innerHTML = '';
 
-  const multiPage = toPage > fromPage;
-  frame.style.flexDirection = multiPage ? 'column' : '';
-  frame.style.alignItems = 'center';
-  frame.style.gap = multiPage ? '16px' : '';
-
-  const padding = 32;
-  const frameW = frame.clientWidth - padding;
+  const numPages = toPage - fromPage + 1;
+  const pad = 24;
+  const frameW = frame.clientWidth  - pad;
+  const frameH = frame.clientHeight - pad;
 
   for (let p = fromPage; p <= toPage; p++) {
     const page = await state.pdfDoc.getPage(p);
     const baseVp = page.getViewport({ scale: 1 });
-    const fitScale = (frameW / baseVp.width) * state.zoom;
+
+    let fitScale;
+    if (numPages === 1) {
+      // Fit entire page in view — constrain by both width and height
+      const scaleByW = frameW  / baseVp.width;
+      const scaleByH = frameH / baseVp.height;
+      fitScale = Math.min(scaleByW, scaleByH) * state.zoom;
+    } else {
+      // Multiple pages: fit width, scroll vertically
+      fitScale = (frameW / baseVp.width) * state.zoom;
+    }
+
     const vp = page.getViewport({ scale: fitScale });
     const dpr = window.devicePixelRatio || 1;
 
