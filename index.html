@@ -862,14 +862,19 @@ function renderSignRow(it, catId, f) {
   const note = it.note ? `<span class="sign-note">${hi(it.note,f)}</span>` : '';
 
   let badgesHtml;
-  if (!it.pages || !it.pages.length) {
-    badgesHtml = `<div class="page-badges"><span class="page-badge no-page">geen p.</span></div>`;
+  if (state.editMode) {
+    if (!it.pages || !it.pages.length) {
+      badgesHtml = `<div class="page-badges"><span class="page-badge no-page">geen p.</span></div>`;
+    } else {
+      const isActive = state.activeSignId === it.id;
+      badgesHtml = `<div class="page-badges">${it.pages.map((ref,i) => {
+        const ac = isActive && i === state.activeRefIdx ? 'active-ref' : '';
+        const lbl = ref.url ? '&#128247;' : esc(refLabel(ref));
+        return `<span class="page-badge ${ac}" data-ref-idx="${i}">${lbl}</span>`;
+      }).join('')}</div>`;
+    }
   } else {
-    const isActive = state.activeSignId === it.id;
-    badgesHtml = `<div class="page-badges">${it.pages.map((ref,i) => {
-      const ac = isActive && i === state.activeRefIdx ? 'active-ref' : '';
-      return `<span class="page-badge ${ac}" data-ref-idx="${i}">${esc(refLabel(ref))}</span>`;
-    }).join('')}</div>`;
+    badgesHtml = '';
   }
 
   return `<li class="${cls}" data-sign-id="${esc(it.id)}" data-cat-id="${esc(catId)}">
@@ -2828,14 +2833,19 @@ function renderSignRow(it, catId, f) {
   const note = it.note ? `<span class="sign-note">${hi(it.note,f)}</span>` : '';
 
   let badgesHtml;
-  if (!it.pages || !it.pages.length) {
-    badgesHtml = `<div class="page-badges"><span class="page-badge no-page">geen p.</span></div>`;
+  if (state.editMode) {
+    if (!it.pages || !it.pages.length) {
+      badgesHtml = `<div class="page-badges"><span class="page-badge no-page">geen p.</span></div>`;
+    } else {
+      const isActive = state.activeSignId === it.id;
+      badgesHtml = `<div class="page-badges">${it.pages.map((ref,i) => {
+        const ac = isActive && i === state.activeRefIdx ? 'active-ref' : '';
+        const lbl = ref.url ? '&#128247;' : esc(refLabel(ref));
+        return `<span class="page-badge ${ac}" data-ref-idx="${i}">${lbl}</span>`;
+      }).join('')}</div>`;
+    }
   } else {
-    const isActive = state.activeSignId === it.id;
-    badgesHtml = `<div class="page-badges">${it.pages.map((ref,i) => {
-      const ac = isActive && i === state.activeRefIdx ? 'active-ref' : '';
-      return `<span class="page-badge ${ac}" data-ref-idx="${i}">${esc(refLabel(ref))}</span>`;
-    }).join('')}</div>`;
+    badgesHtml = '';
   }
 
   return `<li class="${cls}" data-sign-id="${esc(it.id)}" data-cat-id="${esc(catId)}">
