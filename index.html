@@ -88,7 +88,20 @@ h1 {
 }
 h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
 .tagline { color: var(--ink-soft); font-size: 13.5px; margin-bottom: 16px; }
-.header-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.header-actions { display: none !important; }
+.index-bottom-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 24px; border-top: 1px solid var(--line-soft);
+  background: var(--paper); flex-shrink: 0;
+  position: sticky; bottom: 0; z-index: 5;
+}
+.edit-mode-label {
+  font-size: 12.5px; color: var(--ink-faint);
+  font-family: 'IBM Plex Mono', monospace; flex: 1;
+  transition: color .15s;
+}
+body.edit-mode .edit-mode-label { color: var(--accent); font-weight: 500; }
+body.edit-mode #editToggle { background: var(--accent); color: white; border-color: var(--accent); }
 
 .icon-btn {
   width: 30px; height: 30px;
@@ -546,14 +559,7 @@ mark { background: rgba(184,85,64,.18); color: inherit; padding: 0 2px; border-r
           <div class="eyebrow">Freeplay · Ritmo con Signs</div>
           <h1>Signs <em>index</em></h1>
         </div>
-        <div class="header-actions">
-          <button class="icon-btn" id="editToggle" title="Bewerken aan/uit" type="button">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2L5 13l-3 .5.5-3 9-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="icon-btn" id="settingsBtn" title="Meer opties" type="button">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg>
-          </button>
-        </div>
+        <div class="header-actions"></div>
       </div>
       
       <div class="search-wrap">
@@ -572,6 +578,15 @@ mark { background: rgba(184,85,64,.18); color: inherit; padding: 0 2px; border-r
       <span class="ok">✓</span>
       <span class="file-name" id="pdfFileName">Handboek geladen</span>
       <input type="file" accept="application/pdf" id="pdfInputChange" style="display:none">
+    </div>
+    <div class="index-bottom-bar">
+      <button class="icon-btn" id="editToggle" title="Bewerken aan/uit" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2L5 13l-3 .5.5-3 9-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="edit-mode-label">Bewerkmodus</span>
+      <button class="icon-btn edit-only" id="settingsBtn" title="Meer opties" type="button" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg>
+      </button>
     </div>
     <div class="settings-menu" id="settingsMenu">
       <button class="menu-item" id="exportBtn" type="button">
@@ -756,7 +771,10 @@ function hi(s, f) {
   return e.replace(new RegExp('('+f.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<mark>$1</mark>');
 }
 
-function refLabel(ref) { return ref.to ? `p. ${ref.from}-${ref.to}` : `p. ${ref.from}`; }
+function refLabel(ref) {
+  if (ref.url) return ref.label || 'afbeelding';
+  return ref.to ? `p. ${ref.from}-${ref.to}` : `p. ${ref.from}`;
+}
 
 function allPagesLabel(item) {
   if (!item.pages || !item.pages.length) return null;
@@ -869,10 +887,20 @@ function renderEditForm(it, catId) {
   if (pages.length === 0) {
     refsHtml = '<p class="pages-empty">Nog geen pagina\'s toegevoegd.</p>';
   } else {
-    refsHtml = pages.map((ref, i) => `
-      <div class="page-ref-row" data-ref-idx="${i}">
+    refsHtml = pages.map((ref, i) => {
+      const isImg = !!ref.url;
+      return `
+      <div class="page-ref-row" data-ref-idx="${i}" data-ref-type="${isImg ? 'image' : 'pdf'}">
+        <select class="ref-type-select" data-act="ref-type" style="flex-shrink:0;padding:5px 8px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:12.5px;color:var(--ink-soft);cursor:pointer">
+          <option value="pdf" ${isImg ? '' : 'selected'}>PDF pagina</option>
+          <option value="image" ${isImg ? 'selected' : ''}>Afbeelding</option>
+        </select>
+        ${isImg ? `
+        <input type="text" class="url-input" value="${esc(ref.url)}" placeholder="https://..." style="flex:1;padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">
+        <input type="text" class="label-input" value="${esc(ref.label||'')}" placeholder="naam (opt.)" style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">
+        ` : `
         <div class="pf">
-          <input type="number" class="from-input" value="${ref.from}" min="1" max="${maxP}" placeholder="van">
+          <input type="number" class="from-input" value="${ref.from ?? ''}" min="1" max="${maxP}" placeholder="van">
           <button class="pick-btn" data-act="pick-from" data-ref-idx="${i}" ${dis} type="button">
             <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
             Kies
@@ -886,10 +914,12 @@ function renderEditForm(it, catId) {
             Kies
           </button>
         </div>
+        `}
         <button class="del-ref-btn" data-act="del-ref" data-ref-idx="${i}" type="button" title="Verwijder">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   return `<li><form class="edit-form" data-sign-id="${esc(it.id)}" data-cat-id="${esc(catId)}" onsubmit="return false">
@@ -977,12 +1007,20 @@ function handleCatAction(act, catId) {
 
 function readPagesFromForm(form) {
   return [...form.querySelectorAll('.page-ref-row')].map(row => {
-    const fromVal = parseInt(row.querySelector('.from-input')?.value);
-    const toVal = parseInt(row.querySelector('.to-input')?.value);
-    if (!fromVal || isNaN(fromVal)) return null;
-    const ref = { from: fromVal };
-    if (toVal && !isNaN(toVal) && toVal > fromVal) ref.to = toVal;
-    return ref;
+    const type = row.dataset.refType;
+    if (type === 'image') {
+      const url = row.querySelector('.url-input')?.value.trim();
+      if (!url) return null;
+      const label = row.querySelector('.label-input')?.value.trim();
+      return label ? { url, label } : { url };
+    } else {
+      const fromVal = parseInt(row.querySelector('.from-input')?.value);
+      const toVal = parseInt(row.querySelector('.to-input')?.value);
+      if (!fromVal || isNaN(fromVal)) return null;
+      const ref = { from: fromVal };
+      if (toVal && !isNaN(toVal) && toVal > fromVal) ref.to = toVal;
+      return ref;
+    }
   }).filter(Boolean);
 }
 
@@ -1141,6 +1179,13 @@ function showSign(item, cat, refIdx = 0) {
   }
 
   const ref = pages[state.activeRefIdx];
+  // Image ref
+  if (ref.url) {
+    $('viewerControls').style.display = 'none';
+    showImageRef(ref);
+    return;
+  }
+  // PDF ref
   if (!state.pdfDoc) {
     $('viewerControls').style.display = 'none';
     showSignInfo(item);
@@ -1167,6 +1212,17 @@ function updateViewerStrip(item) {
     item.pages.map((ref, i) =>
       `<button class="strip-btn ${i === state.activeRefIdx ? 'active' : ''}" data-ref-idx="${i}" type="button">${esc(refLabel(ref))}</button>`
     ).join('');
+}
+
+function showImageRef(ref) {
+  const frame = $('viewerFrame');
+  frame.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = ref.url;
+  img.alt = ref.label || 'sign';
+  img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 8px 24px -8px rgba(29,35,51,.18);background:white;border-radius:2px;';
+  img.onerror = () => { frame.innerHTML = `<div class="empty-state"><h2>Afbeelding niet gevonden</h2><p style="font-size:13px;color:var(--ink-faint)">${esc(ref.url)}</p></div>`; };
+  frame.appendChild(img);
 }
 
 function showSignInfo(item) {
@@ -1529,14 +1585,17 @@ $('pageRefStrip').addEventListener('click', e => {
 });
 
 // edit toggle
+function setEditMode(on) {
+  state.editMode = on;
+  document.body.classList.toggle('edit-mode', on);
+  $('settingsBtn').style.display = on ? '' : 'none';
+  if (!on) state.editingSignId = null;
+  renderIndex();
+}
+
 $('editToggle').addEventListener('click', () => {
   if (state.editMode) {
-    // turn off — no password needed
-    state.editMode = false;
-    document.body.classList.remove('edit-mode');
-    $('editToggle').classList.remove('active');
-    state.editingSignId = null;
-    renderIndex();
+    setEditMode(false);
     toast('Bewerk-modus uit');
   } else {
     showPasswordModal();
@@ -1569,10 +1628,7 @@ function showPasswordModal() {
     const ok = await checkPw(inp.value);
     if (ok) {
       overlay.remove();
-      state.editMode = true;
-      document.body.classList.add('edit-mode');
-      $('editToggle').classList.add('active');
-      renderIndex();
+      setEditMode(true);
       toast('Bewerk-modus aan');
     } else {
       err.style.display = 'block';
@@ -2256,14 +2312,7 @@ mark { background: rgba(184,85,64,.18); color: inherit; padding: 0 2px; border-r
           <div class="eyebrow">Freeplay · Ritmo con Signs</div>
           <h1>Signs <em>index</em></h1>
         </div>
-        <div class="header-actions">
-          <button class="icon-btn" id="editToggle" title="Bewerken aan/uit" type="button">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2L5 13l-3 .5.5-3 9-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="icon-btn" id="settingsBtn" title="Meer opties" type="button">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg>
-          </button>
-        </div>
+        <div class="header-actions"></div>
       </div>
       
       <div class="search-wrap">
@@ -2282,6 +2331,15 @@ mark { background: rgba(184,85,64,.18); color: inherit; padding: 0 2px; border-r
       <span class="ok">✓</span>
       <span class="file-name" id="pdfFileName">Handboek geladen</span>
       <input type="file" accept="application/pdf" id="pdfInputChange" style="display:none">
+    </div>
+    <div class="index-bottom-bar">
+      <button class="icon-btn" id="editToggle" title="Bewerken aan/uit" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2L5 13l-3 .5.5-3 9-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="edit-mode-label">Bewerkmodus</span>
+      <button class="icon-btn edit-only" id="settingsBtn" title="Meer opties" type="button" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg>
+      </button>
     </div>
     <div class="settings-menu" id="settingsMenu">
       <button class="menu-item" id="exportBtn" type="button">
@@ -2516,7 +2574,10 @@ function hi(s, f) {
   return e.replace(new RegExp('('+f.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<mark>$1</mark>');
 }
 
-function refLabel(ref) { return ref.to ? `p. ${ref.from}-${ref.to}` : `p. ${ref.from}`; }
+function refLabel(ref) {
+  if (ref.url) return ref.label || 'afbeelding';
+  return ref.to ? `p. ${ref.from}-${ref.to}` : `p. ${ref.from}`;
+}
 
 function allPagesLabel(item) {
   if (!item.pages || !item.pages.length) return null;
@@ -2629,10 +2690,20 @@ function renderEditForm(it, catId) {
   if (pages.length === 0) {
     refsHtml = '<p class="pages-empty">Nog geen pagina\'s toegevoegd.</p>';
   } else {
-    refsHtml = pages.map((ref, i) => `
-      <div class="page-ref-row" data-ref-idx="${i}">
+    refsHtml = pages.map((ref, i) => {
+      const isImg = !!ref.url;
+      return `
+      <div class="page-ref-row" data-ref-idx="${i}" data-ref-type="${isImg ? 'image' : 'pdf'}">
+        <select class="ref-type-select" data-act="ref-type" style="flex-shrink:0;padding:5px 8px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:12.5px;color:var(--ink-soft);cursor:pointer">
+          <option value="pdf" ${isImg ? '' : 'selected'}>PDF pagina</option>
+          <option value="image" ${isImg ? 'selected' : ''}>Afbeelding</option>
+        </select>
+        ${isImg ? `
+        <input type="text" class="url-input" value="${esc(ref.url)}" placeholder="https://..." style="flex:1;padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">
+        <input type="text" class="label-input" value="${esc(ref.label||'')}" placeholder="naam (opt.)" style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">
+        ` : `
         <div class="pf">
-          <input type="number" class="from-input" value="${ref.from}" min="1" max="${maxP}" placeholder="van">
+          <input type="number" class="from-input" value="${ref.from ?? ''}" min="1" max="${maxP}" placeholder="van">
           <button class="pick-btn" data-act="pick-from" data-ref-idx="${i}" ${dis} type="button">
             <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
             Kies
@@ -2646,10 +2717,12 @@ function renderEditForm(it, catId) {
             Kies
           </button>
         </div>
+        `}
         <button class="del-ref-btn" data-act="del-ref" data-ref-idx="${i}" type="button" title="Verwijder">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   return `<li><form class="edit-form" data-sign-id="${esc(it.id)}" data-cat-id="${esc(catId)}" onsubmit="return false">
@@ -2737,12 +2810,20 @@ function handleCatAction(act, catId) {
 
 function readPagesFromForm(form) {
   return [...form.querySelectorAll('.page-ref-row')].map(row => {
-    const fromVal = parseInt(row.querySelector('.from-input')?.value);
-    const toVal = parseInt(row.querySelector('.to-input')?.value);
-    if (!fromVal || isNaN(fromVal)) return null;
-    const ref = { from: fromVal };
-    if (toVal && !isNaN(toVal) && toVal > fromVal) ref.to = toVal;
-    return ref;
+    const type = row.dataset.refType;
+    if (type === 'image') {
+      const url = row.querySelector('.url-input')?.value.trim();
+      if (!url) return null;
+      const label = row.querySelector('.label-input')?.value.trim();
+      return label ? { url, label } : { url };
+    } else {
+      const fromVal = parseInt(row.querySelector('.from-input')?.value);
+      const toVal = parseInt(row.querySelector('.to-input')?.value);
+      if (!fromVal || isNaN(fromVal)) return null;
+      const ref = { from: fromVal };
+      if (toVal && !isNaN(toVal) && toVal > fromVal) ref.to = toVal;
+      return ref;
+    }
   }).filter(Boolean);
 }
 
@@ -2901,6 +2982,13 @@ function showSign(item, cat, refIdx = 0) {
   }
 
   const ref = pages[state.activeRefIdx];
+  // Image ref
+  if (ref.url) {
+    $('viewerControls').style.display = 'none';
+    showImageRef(ref);
+    return;
+  }
+  // PDF ref
   if (!state.pdfDoc) {
     $('viewerControls').style.display = 'none';
     showSignInfo(item);
@@ -3286,14 +3374,17 @@ $('pageRefStrip').addEventListener('click', e => {
 });
 
 // edit toggle
+function setEditMode(on) {
+  state.editMode = on;
+  document.body.classList.toggle('edit-mode', on);
+  $('settingsBtn').style.display = on ? '' : 'none';
+  if (!on) state.editingSignId = null;
+  renderIndex();
+}
+
 $('editToggle').addEventListener('click', () => {
   if (state.editMode) {
-    // turn off — no password needed
-    state.editMode = false;
-    document.body.classList.remove('edit-mode');
-    $('editToggle').classList.remove('active');
-    state.editingSignId = null;
-    renderIndex();
+    setEditMode(false);
     toast('Bewerk-modus uit');
   } else {
     showPasswordModal();
@@ -3326,10 +3417,7 @@ function showPasswordModal() {
     const ok = await checkPw(inp.value);
     if (ok) {
       overlay.remove();
-      state.editMode = true;
-      document.body.classList.add('edit-mode');
-      $('editToggle').classList.add('active');
-      renderIndex();
+      setEditMode(true);
       toast('Bewerk-modus aan');
     } else {
       err.style.display = 'block';
