@@ -640,12 +640,7 @@ body.edit-mode .category.hidden-cat > .add-row { pointer-events: auto; }
         <div class="viewer-meta" id="viewerMeta">Klik links op een sign</div>
       </div>
       <div class="viewer-controls" id="viewerControls" style="display:none">
-        <button class="ctrl-btn" id="prevPage" title="Vorige pagina" type="button">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 11L4.5 7l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button class="ctrl-btn" id="nextPage" title="Volgende pagina" type="button">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5.5 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
+
         <button class="ctrl-btn" id="zoomOut" title="Uitzoomen" type="button">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         </button>
@@ -667,7 +662,7 @@ body.edit-mode .category.hidden-cat > .add-row { pointer-events: auto; }
 // ══════════════════════════════════════════════
 // DATA  (pages = [{from, to?}])
 // ══════════════════════════════════════════════
-const DEFAULT_DATA = /*DATA_START*/{"version":2,"categories":[{"id":"c1","name":"Start & Groep","items":[{"id":"s101","name":"Start","pages":[{"from":46,"to":47}]},{"id":"s102","name":"Free Contribution","pages":[{"from":48}]},{"id":"s103","name":"Uit / Stop","pages":[{"from":49}]},{"id":"s104","name":"Select","pages":[{"from":50}]},{"id":"s105","name":"Split into Sections","pages":[{"from":51}]},{"id":"s106","name":"Whole Group","pages":[{"from":69}]}]},{"id":"c3","name":"Speelwijze","items":[{"id":"s305","name":"Basis / Background","pages":[{"from":59}]},{"id":"s301","name":"Kort / Staccato","pages":[{"from":56}]},{"id":"s302","name":"Lange noot / Sustained","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/lange noot.png"}]},{"id":"s303","name":"Solo","pages":[{"from":58}]},{"id":"s304","name":"Wacht","pages":[{"from":72}]}]},{"id":"c4","name":"Ideeën & Ontwikkeling","items":[{"id":"s401","name":"New / Change Idea","pages":[{"from":114}]},{"id":"s402","name":"Support idee","pages":[{"from":60}]},{"id":"s403","name":"Kopieer (unison)","pages":[{"from":61}]},{"id":"s404","name":"Ontwikkel idee","pages":[{"from":68}]},{"id":"s_morajfau_vrug","name":"De-Ontwikkel idee","pages":[{"from":69}]},{"id":"s405","name":"Ontwikkel pitch","pages":[{"from":204}]},{"id":"s406","name":"Ontwikkel ritme","pages":[{"from":205}]},{"id":"s407","name":"Loop","pages":[{"from":64}]}]},{"id":"c2","name":"Dynamiek & Ruimte","items":[{"id":"s201","name":"Volume","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/volume.png"}]},{"id":"s202","name":"Dynamic","pages":[{"from":53}]},{"id":"s203","name":"Panning","pages":[{"from":84}]},{"id":"s204","name":"Activity / Density","pages":[{"from":91}]},{"id":"s205","name":"Heterophony","pages":[{"from":62}]},{"id":"s_mor3p2fu_z0lf","name":"Sync / Onsync","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/sync onsync.png"}],"note":"Order / disorder"},{"id":"s_mor3qq36_08pg","name":"Plummer","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/plummer.png"}],"note":"Stutter effect"},{"id":"s_mor3y9cr_gg22","name":"Maak Percussief","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/kloppen.png"}],"note":"Muzikant speelt phrase zonder (toon/pitch).","translation":"2 vuisten tegen elkaar"},{"id":"s_mor40ldu_zyfw","name":"Soundscape","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/soundscape.png"}]}]},{"id":"c5","name":"Breaks","items":[{"id":"s501","name":"Break & continue","pages":[{"from":94}]},{"id":"s502","name":"Break Call & Response","pages":[{"from":96}]},{"id":"s503","name":"Break Ping pong","pages":[{"from":98}]}]},{"id":"c6","name":"Melodie & Harmonie","items":[{"id":"s601","name":"Melody","pages":[{"from":200}]},{"id":"s602","name":"Chords","pages":[{"from":209}]},{"id":"s603","name":"½ toon omhoog/omlaag","pages":[{"from":210}]},{"id":"s_moq9a6um_q71l","name":"Harmonizeren","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/harmonizeren.png"}],"note":"(Laagjes 1 3 5 7)"}]},{"id":"c7","name":"Tempo & Feel","items":[{"id":"s701","name":"Tempo Speed up / Slow down","pages":[{"from":71}]},{"id":"s702","name":"Beats per measure","pages":[{"from":76}]},{"id":"s703","name":"Subdivision","note":"alleen recht en triplet feel!","pages":[{"from":78,"to":79}]},{"id":"s_moran14q_rvw0","name":"Half Time","pages":[{"from":112}]},{"id":"s_moraon0n_ih4u","name":"Double Time","pages":[{"from":111}]}]},{"id":"s_mor3rykl_bhev","name":"Vocaal","items":[{"id":"s_mor3s1it_vdjt","name":"gebruik stem","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/gebruik stem.png"}]},{"id":"s_mor3spb2_xton","name":"Vertel Verhaal","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/verhaal.png"}],"note":"storytelling"},{"id":"s_mor3tdz9_eznp","name":"Fluisteren","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/fluister.png"}],"note":"Muzikanten gaan allemaal fluisteren"},{"id":"s_mor3u0w9_oipi","name":"Praten","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/praten.png"}],"note":"Muzikanten gaan allemaal praten"}]}]}/*DATA_END*/;
+const DEFAULT_DATA = /*DATA_START*/{"version":2,"categories":[{"id":"c1","name":"Start & Groep","items":[{"id":"s101","name":"Start","pages":[{"from":46,"to":47}]},{"id":"s102","name":"Free Contribution","pages":[{"from":48}]},{"id":"s103","name":"Uit / Stop","pages":[{"from":49}]},{"id":"s104","name":"Select","pages":[{"from":50}]},{"id":"s105","name":"Split into Sections","pages":[{"from":51}]},{"id":"s106","name":"Whole Group","pages":[{"from":52}]}]},{"id":"c3","name":"Speelwijze","items":[{"id":"s305","name":"Basis / Background","pages":[{"from":59}]},{"id":"s301","name":"Kort / Staccato","pages":[{"from":56}]},{"id":"s302","name":"Lange noot / Sustained","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/lange noot.png"}]},{"id":"s303","name":"Solo","pages":[{"from":58}]},{"id":"s304","name":"Wacht","pages":[{"from":72}]}]},{"id":"c4","name":"Ideeën & Ontwikkeling","items":[{"id":"s401","name":"New / Change Idea","pages":[{"from":114}]},{"id":"s402","name":"Support idee","pages":[{"from":60}]},{"id":"s403","name":"Kopieer (unison)","pages":[{"from":61}]},{"id":"s404","name":"Ontwikkel idee","pages":[{"from":68}]},{"id":"s_morajfau_vrug","name":"De-Ontwikkel idee","pages":[{"from":69}]},{"id":"s405","name":"Ontwikkel pitch","pages":[{"from":204}]},{"id":"s406","name":"Ontwikkel ritme","pages":[{"from":205}]},{"id":"s407","name":"Loop","pages":[{"from":64}]}]},{"id":"c2","name":"Dynamiek & Ruimte","items":[{"id":"s201","name":"Volume","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/volume.png"}]},{"id":"s202","name":"Dynamic","pages":[{"from":53}]},{"id":"s203","name":"Panning","pages":[{"from":84}]},{"id":"s204","name":"Activity / Density","pages":[{"from":91}]},{"id":"s205","name":"Heterophony","pages":[{"from":62}]},{"id":"s_mor3p2fu_z0lf","name":"Sync / Onsync","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/sync onsync.png"}],"note":"Order / disorder"},{"id":"s_mor3qq36_08pg","name":"Plummer","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/plummer.png"}],"note":"Stutter effect"},{"id":"s_mor3y9cr_gg22","name":"Maak Percussief","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/kloppen.png"}],"note":"Muzikant speelt phrase zonder (toon/pitch).","translation":"2 vuisten tegen elkaar"},{"id":"s_mor40ldu_zyfw","name":"Soundscape","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/soundscape.png"}]}]},{"id":"c5","name":"Breaks","items":[{"id":"s501","name":"Break & continue","pages":[{"from":94}]},{"id":"s502","name":"Break Call & Response","pages":[{"from":96}]},{"id":"s503","name":"Break Ping pong","pages":[{"from":98}]}]},{"id":"c6","name":"Melodie & Harmonie","items":[{"id":"s601","name":"Melody","pages":[{"from":200}]},{"id":"s602","name":"Chords","pages":[{"from":209}]},{"id":"s603","name":"½ toon omhoog/omlaag","pages":[{"from":210}]},{"id":"s_moq9a6um_q71l","name":"Harmonizeren","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/harmonizeren.png"}],"note":"(Laagjes 1 3 5 7)"}]},{"id":"c7","name":"Tempo & Feel","items":[{"id":"s701","name":"Tempo Speed up / Slow down","pages":[{"from":71}]},{"id":"s702","name":"Beats per measure","pages":[{"from":76}]},{"id":"s703","name":"Subdivision","note":"alleen recht en triplet feel!","pages":[{"from":78,"to":79}]},{"id":"s_moran14q_rvw0","name":"Half Time","pages":[{"from":112}]},{"id":"s_moraon0n_ih4u","name":"Double Time","pages":[{"from":111}]}]},{"id":"s_mor3rykl_bhev","name":"Vocaal","items":[{"id":"s_mor3s1it_vdjt","name":"gebruik stem","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/gebruik stem.png"}]},{"id":"s_mor3spb2_xton","name":"Vertel Verhaal","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/verhaal.png"}],"note":"storytelling"},{"id":"s_mor3tdz9_eznp","name":"Fluisteren","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/fluister.png"}],"note":"Muzikanten gaan allemaal fluisteren"},{"id":"s_mor3u0w9_oipi","name":"Praten","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/praten.png"}],"note":"Muzikanten gaan allemaal praten"}]}]}/*DATA_END*/;
 
 // ── Page number conversion (book page <-> PDF page) ──────────
 // Book pages are stored and displayed; PDF offset is subtracted when rendering.
@@ -1431,8 +1426,6 @@ async function renderPDFRange(fromPage, toPage) {
 
   if (numPages > 1) frame.scrollTop = 0;
   $('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
-  $('prevPage').disabled = fromPage <= 1;
-  $('nextPage').disabled = toPage >= state.pdfDoc.numPages;
 }
 
 // ══════════════════════════════════════════════
@@ -1950,16 +1943,10 @@ function reRenderCurrentRef() {
   renderPDFRange(pdfFrom, pdfTo);
 }
 
-$('prevPage').addEventListener('click', () => { if (state.pdfDoc && state.currentPage > 1) renderPDFPage(state.currentPage - 1); });
-$('nextPage').addEventListener('click', () => { if (state.pdfDoc && state.currentPage < state.pdfDoc.numPages) renderPDFPage(state.currentPage + 1); });
+
 $('zoomIn').addEventListener('click',  () => { state.zoom = Math.min(2.5, state.zoom + .15); reRenderCurrentRef(); });
 $('zoomOut').addEventListener('click', () => { state.zoom = Math.max(.5,  state.zoom - .15); reRenderCurrentRef(); });
-document.addEventListener('keydown', e => {
-  if (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
-  if (!state.pdfDoc) return;
-  if (e.key==='ArrowLeft' && state.currentPage > 1) renderPDFPage(state.currentPage - 1);
-  if (e.key==='ArrowRight' && state.currentPage < state.pdfDoc.numPages) renderPDFPage(state.currentPage + 1);
-});
+
 
 
 $('pdfInputChange').addEventListener('change', e => { if (e.target.files[0]) handlePDFFile(e.target.files[0]); e.target.value=''; });
@@ -2554,12 +2541,7 @@ mark { background: rgba(184,85,64,.18); color: inherit; padding: 0 2px; border-r
         <div class="viewer-meta" id="viewerMeta">Klik links op een sign</div>
       </div>
       <div class="viewer-controls" id="viewerControls" style="display:none">
-        <button class="ctrl-btn" id="prevPage" title="Vorige pagina" type="button">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 11L4.5 7l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button class="ctrl-btn" id="nextPage" title="Volgende pagina" type="button">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5.5 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
+
         <button class="ctrl-btn" id="zoomOut" title="Uitzoomen" type="button">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         </button>
@@ -3361,8 +3343,6 @@ async function renderPDFRange(fromPage, toPage) {
   }
 
   $('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
-  $('prevPage').disabled = fromPage <= 1;
-  $('nextPage').disabled = toPage >= state.pdfDoc.numPages;
 }
 
 // ══════════════════════════════════════════════
@@ -3830,16 +3810,10 @@ function reRenderCurrentRef() {
   renderPDFRange(pdfFrom, pdfTo);
 }
 
-$('prevPage').addEventListener('click', () => { if (state.pdfDoc && state.currentPage > 1) renderPDFPage(state.currentPage - 1); });
-$('nextPage').addEventListener('click', () => { if (state.pdfDoc && state.currentPage < state.pdfDoc.numPages) renderPDFPage(state.currentPage + 1); });
+
 $('zoomIn').addEventListener('click',  () => { state.zoom = Math.min(2.5, state.zoom + .15); reRenderCurrentRef(); });
 $('zoomOut').addEventListener('click', () => { state.zoom = Math.max(.5,  state.zoom - .15); reRenderCurrentRef(); });
-document.addEventListener('keydown', e => {
-  if (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
-  if (!state.pdfDoc) return;
-  if (e.key==='ArrowLeft' && state.currentPage > 1) renderPDFPage(state.currentPage - 1);
-  if (e.key==='ArrowRight' && state.currentPage < state.pdfDoc.numPages) renderPDFPage(state.currentPage + 1);
-});
+
 
 
 $('pdfInputChange').addEventListener('change', e => { if (e.target.files[0]) handlePDFFile(e.target.files[0]); e.target.value=''; });
