@@ -1150,16 +1150,31 @@ async function handlePDFFile(file) {
 }
 
 function showPDFLoading(pct) {
+  // If a sign is selected, show loading overlay in viewer without replacing sign context
+  const signTitle = $('viewerTitle').textContent;
+  const signMeta  = $('viewerMeta').textContent;
+  const displayPct = Math.max(8, pct); // always start at 8% so it looks alive
   $('viewerFrame').innerHTML = `
     <div class="empty-state">
       <svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <h2>Handboek laden…</h2>
-      <div style="width:220px;background:var(--line-soft);border-radius:99px;height:6px;margin-top:16px;overflow:hidden">
-        <div id="pdfProgressBar" style="height:100%;background:var(--accent);border-radius:99px;width:${pct}%;transition:width .3s"></div>
+      <h2 style="margin-bottom:4px">Even geduld</h2>
+      <p style="margin-bottom:0">Alle gebaren worden geladen.</p>
+      <div style="width:240px;background:var(--line-soft);border-radius:99px;height:7px;margin-top:20px;overflow:hidden">
+        <div id="pdfProgressBar" style="height:100%;background:var(--accent);border-radius:99px;width:${displayPct}%;transition:width .4s ease"></div>
       </div>
-      <p style="margin-top:10px;font-size:12.5px;color:var(--ink-faint)" id="pdfProgressPct">${pct}%</p>
-      <p style="font-size:13px;margin-top:6px">Je kan al een sign selecteren links.</p>
+      <p style="margin-top:8px;font-size:12px;color:var(--ink-faint)" id="pdfProgressPct">${displayPct}%</p>
     </div>`;
+  // Animate from 8% to ~15% in the first second to show life
+  if (pct === 0) {
+    setTimeout(() => {
+      const bar = document.getElementById('pdfProgressBar');
+      const lbl = document.getElementById('pdfProgressPct');
+      if (bar && bar.style.width === '8%') {
+        bar.style.width = '15%';
+        if (lbl) lbl.textContent = '15%';
+      }
+    }, 800);
+  }
 }
 
 async function fetchWithProgress(url) {
@@ -1331,6 +1346,10 @@ function showSignInfo(item) {
     if (item.note) html += `<p style="font-style:italic">${esc(item.note)}</p>`;
     html += `<p style="margin-top:14px;color:var(--ink-faint);font-size:13px">Geen paginareferenties voor dit sign.</p>`;
   } else if (!state.pdfDoc) {
+    if (document.getElementById('pdfProgressBar')) {
+      showPDFLoading(parseInt(document.getElementById('pdfProgressPct')?.textContent || '8'));
+      return;
+    }
     html += `<svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
     html += `<h2>${esc(item.name)}</h2>`;
     if (item.translation) html += `<p>${esc(item.translation)}</p>`;
@@ -3084,16 +3103,31 @@ async function handlePDFFile(file) {
 }
 
 function showPDFLoading(pct) {
+  // If a sign is selected, show loading overlay in viewer without replacing sign context
+  const signTitle = $('viewerTitle').textContent;
+  const signMeta  = $('viewerMeta').textContent;
+  const displayPct = Math.max(8, pct); // always start at 8% so it looks alive
   $('viewerFrame').innerHTML = `
     <div class="empty-state">
       <svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <h2>Handboek laden…</h2>
-      <div style="width:220px;background:var(--line-soft);border-radius:99px;height:6px;margin-top:16px;overflow:hidden">
-        <div id="pdfProgressBar" style="height:100%;background:var(--accent);border-radius:99px;width:${pct}%;transition:width .3s"></div>
+      <h2 style="margin-bottom:4px">Even geduld</h2>
+      <p style="margin-bottom:0">Alle gebaren worden geladen.</p>
+      <div style="width:240px;background:var(--line-soft);border-radius:99px;height:7px;margin-top:20px;overflow:hidden">
+        <div id="pdfProgressBar" style="height:100%;background:var(--accent);border-radius:99px;width:${displayPct}%;transition:width .4s ease"></div>
       </div>
-      <p style="margin-top:10px;font-size:12.5px;color:var(--ink-faint)" id="pdfProgressPct">${pct}%</p>
-      <p style="font-size:13px;margin-top:6px">Je kan al een sign selecteren links.</p>
+      <p style="margin-top:8px;font-size:12px;color:var(--ink-faint)" id="pdfProgressPct">${displayPct}%</p>
     </div>`;
+  // Animate from 8% to ~15% in the first second to show life
+  if (pct === 0) {
+    setTimeout(() => {
+      const bar = document.getElementById('pdfProgressBar');
+      const lbl = document.getElementById('pdfProgressPct');
+      if (bar && bar.style.width === '8%') {
+        bar.style.width = '15%';
+        if (lbl) lbl.textContent = '15%';
+      }
+    }, 800);
+  }
 }
 
 async function fetchWithProgress(url) {
@@ -3253,6 +3287,10 @@ function showSignInfo(item) {
     if (item.note) html += `<p style="font-style:italic">${esc(item.note)}</p>`;
     html += `<p style="margin-top:14px;color:var(--ink-faint);font-size:13px">Geen paginareferenties voor dit sign.</p>`;
   } else if (!state.pdfDoc) {
+    if (document.getElementById('pdfProgressBar')) {
+      showPDFLoading(parseInt(document.getElementById('pdfProgressPct')?.textContent || '8'));
+      return;
+    }
     html += `<svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
     html += `<h2>${esc(item.name)}</h2>`;
     if (item.translation) html += `<p>${esc(item.translation)}</p>`;
