@@ -245,28 +245,27 @@ body.edit-mode .page-badge { font-size: 11px; padding: 2px 6px; }
 }
 .pages-list { display: grid; gap: 6px; }
 .page-ref-row {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
   background: white; border: 1px solid var(--line);
-  border-radius: 6px; padding: 7px 10px;
+  border-radius: 6px; padding: 7px 8px;
 }
-.page-ref-row .pf { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
-.page-ref-row .pf-sep { color: var(--ink-faint); font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+.page-ref-row .pf { display: flex; align-items: center; gap: 4px; }
+.page-ref-row .pf-sep { color: var(--ink-faint); font-size: 11px; white-space: nowrap; flex-shrink: 0; }
 .page-ref-row input[type="number"] {
-  width: 72px; flex-shrink: 0; padding: 5px 8px;
+  width: 60px; flex-shrink: 0; padding: 4px 6px;
   font-size: 13px; border: 1px solid var(--line);
   border-radius: 5px; background: var(--bg); text-align: center;
 }
-.page-ref-row input[type="number"].to-field { width: 72px; }
 .page-ref-row input:focus {
   outline: none; border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-tint); background: #fff;
 }
 .pick-btn {
-  flex-shrink: 0; padding: 5px 9px;
+  flex-shrink: 0; padding: 4px 7px;
   border: 1px solid var(--line); background: transparent;
-  border-radius: 5px; cursor: pointer; font-size: 11.5px;
+  border-radius: 5px; cursor: pointer; font-size: 11px;
   color: var(--accent); white-space: nowrap;
-  transition: all .12s; display: flex; align-items: center; gap: 4px;
+  transition: all .12s; display: flex; align-items: center; gap: 3px;
 }
 .pick-btn:hover { background: var(--accent-tint); border-color: var(--accent-soft); }
 .pick-btn:disabled { opacity: .35; cursor: not-allowed; }
@@ -891,7 +890,7 @@ function renderEditForm(it, catId) {
       const isImg = !!ref.url;
       return `
       <div class="page-ref-row" data-ref-idx="${i}" data-ref-type="${isImg ? 'image' : 'pdf'}">
-        <select class="ref-type-select" data-act="ref-type" style="flex-shrink:0;padding:5px 8px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:12.5px;color:var(--ink-soft);cursor:pointer">
+        <select class="ref-type-select" data-act="ref-type" style="flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px;color:var(--ink-soft);cursor:pointer;max-width:100px">
           <option value="pdf" ${isImg ? '' : 'selected'}>PDF pagina</option>
           <option value="image" ${isImg ? 'selected' : ''}>Afbeelding</option>
         </select>
@@ -1155,6 +1154,7 @@ function wirePdfInputs() {
 }
 
 function showSign(item, cat, refIdx = 0) {
+  state.zoom = 1.0; // reset zoom on new sign
   document.body.classList.add('viewer-open');
   state.activeSignId = item.id;
   const pages = item.pages || [];
@@ -1284,7 +1284,12 @@ async function renderPDFRange(fromPage, toPage) {
     const scaleByH = frameH / baseVp0.height;
     fitScale = Math.min(scaleByW, scaleByH) * state.zoom;
   } else {
-    fitScale = (frameW / baseVp0.width) * state.zoom;
+    // Fit all pages (combined height) in the visible area
+    const gap = 12;
+    const totalH = pages.reduce((s, pg) => s + pg.getViewport({scale:1}).height, 0) + gap * (numPages - 1);
+    const scaleByW = frameW / baseVp0.width;
+    const scaleByH = frameH / totalH;
+    fitScale = Math.min(scaleByW, scaleByH) * state.zoom * 1.44;
   }
 
   for (const page of pages) {
@@ -1998,28 +2003,27 @@ body.edit-mode .page-badge { font-size: 11px; padding: 2px 6px; }
 }
 .pages-list { display: grid; gap: 6px; }
 .page-ref-row {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
   background: white; border: 1px solid var(--line);
-  border-radius: 6px; padding: 7px 10px;
+  border-radius: 6px; padding: 7px 8px;
 }
-.page-ref-row .pf { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
-.page-ref-row .pf-sep { color: var(--ink-faint); font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+.page-ref-row .pf { display: flex; align-items: center; gap: 4px; }
+.page-ref-row .pf-sep { color: var(--ink-faint); font-size: 11px; white-space: nowrap; flex-shrink: 0; }
 .page-ref-row input[type="number"] {
-  width: 72px; flex-shrink: 0; padding: 5px 8px;
+  width: 60px; flex-shrink: 0; padding: 4px 6px;
   font-size: 13px; border: 1px solid var(--line);
   border-radius: 5px; background: var(--bg); text-align: center;
 }
-.page-ref-row input[type="number"].to-field { width: 72px; }
 .page-ref-row input:focus {
   outline: none; border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-tint); background: #fff;
 }
 .pick-btn {
-  flex-shrink: 0; padding: 5px 9px;
+  flex-shrink: 0; padding: 4px 7px;
   border: 1px solid var(--line); background: transparent;
-  border-radius: 5px; cursor: pointer; font-size: 11.5px;
+  border-radius: 5px; cursor: pointer; font-size: 11px;
   color: var(--accent); white-space: nowrap;
-  transition: all .12s; display: flex; align-items: center; gap: 4px;
+  transition: all .12s; display: flex; align-items: center; gap: 3px;
 }
 .pick-btn:hover { background: var(--accent-tint); border-color: var(--accent-soft); }
 .pick-btn:disabled { opacity: .35; cursor: not-allowed; }
@@ -2694,7 +2698,7 @@ function renderEditForm(it, catId) {
       const isImg = !!ref.url;
       return `
       <div class="page-ref-row" data-ref-idx="${i}" data-ref-type="${isImg ? 'image' : 'pdf'}">
-        <select class="ref-type-select" data-act="ref-type" style="flex-shrink:0;padding:5px 8px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:12.5px;color:var(--ink-soft);cursor:pointer">
+        <select class="ref-type-select" data-act="ref-type" style="flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px;color:var(--ink-soft);cursor:pointer;max-width:100px">
           <option value="pdf" ${isImg ? '' : 'selected'}>PDF pagina</option>
           <option value="image" ${isImg ? 'selected' : ''}>Afbeelding</option>
         </select>
@@ -3075,7 +3079,7 @@ async function renderPDFRange(fromPage, toPage) {
   // Scale so all pages fit in the visible area (both width and total height)
   const scaleByW = frameW / maxW;
   const scaleByH = frameH / totalH;
-  const fitScale = Math.min(scaleByW, scaleByH) * state.zoom;
+  const fitScale = Math.min(scaleByW, scaleByH) * state.zoom * 1.44;
 
   for (const page of pages) {
     const vp = page.getViewport({ scale: fitScale });
