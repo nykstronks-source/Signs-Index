@@ -1937,7 +1937,9 @@ function reRenderCurrentRef() {
   const found = findSign(state.activeSignId);
   if (!found) return;
   const ref = (found.item.pages || [])[state.activeRefIdx];
-  if (!ref || !state.pdfDoc) return;
+  if (!ref) return;
+  if (ref.url) { showImageRef(ref); return; }  // image ref — re-show image
+  if (!state.pdfDoc) return;
   const pdfFrom = bookToPdf(ref.from);
   const pdfTo   = ref.to ? bookToPdf(ref.to) : pdfFrom;
   renderPDFRange(pdfFrom, pdfTo);
@@ -3820,7 +3822,9 @@ function reRenderCurrentRef() {
   const found = findSign(state.activeSignId);
   if (!found) return;
   const ref = (found.item.pages || [])[state.activeRefIdx];
-  if (!ref || !state.pdfDoc) return;
+  if (!ref) return;
+  if (ref.url) { showImageRef(ref); return; }  // image ref — re-show image
+  if (!state.pdfDoc) return;
   const pdfFrom = bookToPdf(ref.from);
   const pdfTo   = ref.to ? bookToPdf(ref.to) : pdfFrom;
   renderPDFRange(pdfFrom, pdfTo);
