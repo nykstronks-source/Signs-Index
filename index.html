@@ -1099,6 +1099,8 @@ function addNewCategory() {
 if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+const PDF_URL = 'https://superb-bombolone-f68024.netlify.app/manual.pdf';
+
 async function loadPDFFromBuffer(buf, name) {
   try {
     state.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
@@ -1107,6 +1109,25 @@ async function loadPDFFromBuffer(buf, name) {
     $('pdfBanner').style.display = '';
     return true;
   } catch(e) { console.error(e); toast('Kon PDF niet laden','error'); return false; }
+}
+
+async function loadPDFStreaming(url, name) {
+  // Use pdf.js range requests — loads only needed pages, not the whole file
+  try {
+    state.pdfDoc = await pdfjsLib.getDocument({
+      url,
+      rangeChunkSize: 65536,   // 64KB chunks
+      disableAutoFetch: true,  // don't prefetch everything
+      disableStream: false,
+    }).promise;
+    state.pdfFileName = name;
+    $('pdfFileName').textContent = name;
+    $('pdfBanner').style.display = '';
+    return true;
+  } catch(e) {
+    console.error('Streaming failed, falling back to full fetch', e);
+    return false;
+  }
 }
 
 async function handlePDFFile(file) {
@@ -1127,13 +1148,12 @@ async function handlePDFFile(file) {
 }
 
 async function tryLoadServer() {
-  const PDF_URL = 'https://superb-bombolone-f68024.netlify.app/manual.pdf';
   try {
+    // Show loading immediately but don't block — streaming starts fast
     $('viewerFrame').innerHTML = `<div class="empty-state"><div class="spinner"></div><p style="margin-top:18px">Handboek laden…</p></div>`;
-    const resp = await fetch(PDF_URL);
-    if (!resp.ok) { showInitialEmpty(); return false; }
-    const buf = await resp.arrayBuffer();
-    const ok = await loadPDFFromBuffer(buf.slice(0), 'manual.pdf');
+
+    // Try streaming first (instant first page)
+    const ok = await loadPDFStreaming(PDF_URL, 'manual.pdf');
     return ok;
   } catch(e) { showInitialEmpty(); return false; }
 }
@@ -1141,6 +1161,7 @@ async function tryLoadServer() {
 async function tryAutoLoad() {
   const ok = await tryLoadServer();
   if (ok) { showWelcome(); return; }
+  // Fallback: cached version in IndexedDB
   const cached = await Storage.loadPDF();
   if (cached) { await loadPDFFromBuffer(cached.buffer, cached.name); showWelcome(); return; }
   showInitialEmpty();
@@ -1496,8 +1517,12 @@ $('content').addEventListener('click', e => {
       const empty = list.querySelector('.pages-empty');
       if (empty) empty.remove();
       const row = document.createElement('div');
-      row.className = 'page-ref-row'; row.dataset.refIdx = idx;
+      row.className = 'page-ref-row'; row.dataset.refIdx = idx; row.dataset.refType = 'pdf';
       row.innerHTML = `
+        <select class="ref-type-select" style="flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px;color:var(--ink-soft);cursor:pointer;max-width:100px">
+          <option value="pdf" selected>PDF pagina</option>
+          <option value="image">Afbeelding</option>
+        </select>
         <div class="pf">
           <input type="number" class="from-input" min="1" max="${maxP}" placeholder="van">
           <button class="pick-btn" data-act="pick-from" data-ref-idx="${idx}" ${dis} type="button">
@@ -2957,6 +2982,8 @@ function addNewCategory() {
 if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+const PDF_URL = 'https://superb-bombolone-f68024.netlify.app/manual.pdf';
+
 async function loadPDFFromBuffer(buf, name) {
   try {
     state.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
@@ -2965,6 +2992,25 @@ async function loadPDFFromBuffer(buf, name) {
     $('pdfBanner').style.display = '';
     return true;
   } catch(e) { console.error(e); toast('Kon PDF niet laden','error'); return false; }
+}
+
+async function loadPDFStreaming(url, name) {
+  // Use pdf.js range requests — loads only needed pages, not the whole file
+  try {
+    state.pdfDoc = await pdfjsLib.getDocument({
+      url,
+      rangeChunkSize: 65536,   // 64KB chunks
+      disableAutoFetch: true,  // don't prefetch everything
+      disableStream: false,
+    }).promise;
+    state.pdfFileName = name;
+    $('pdfFileName').textContent = name;
+    $('pdfBanner').style.display = '';
+    return true;
+  } catch(e) {
+    console.error('Streaming failed, falling back to full fetch', e);
+    return false;
+  }
 }
 
 async function handlePDFFile(file) {
@@ -2985,13 +3031,12 @@ async function handlePDFFile(file) {
 }
 
 async function tryLoadServer() {
-  const PDF_URL = 'https://superb-bombolone-f68024.netlify.app/manual.pdf';
   try {
+    // Show loading immediately but don't block — streaming starts fast
     $('viewerFrame').innerHTML = `<div class="empty-state"><div class="spinner"></div><p style="margin-top:18px">Handboek laden…</p></div>`;
-    const resp = await fetch(PDF_URL);
-    if (!resp.ok) { showInitialEmpty(); return false; }
-    const buf = await resp.arrayBuffer();
-    const ok = await loadPDFFromBuffer(buf.slice(0), 'manual.pdf');
+
+    // Try streaming first (instant first page)
+    const ok = await loadPDFStreaming(PDF_URL, 'manual.pdf');
     return ok;
   } catch(e) { showInitialEmpty(); return false; }
 }
@@ -2999,6 +3044,7 @@ async function tryLoadServer() {
 async function tryAutoLoad() {
   const ok = await tryLoadServer();
   if (ok) { showWelcome(); return; }
+  // Fallback: cached version in IndexedDB
   const cached = await Storage.loadPDF();
   if (cached) { await loadPDFFromBuffer(cached.buffer, cached.name); showWelcome(); return; }
   showInitialEmpty();
@@ -3334,8 +3380,12 @@ $('content').addEventListener('click', e => {
       const empty = list.querySelector('.pages-empty');
       if (empty) empty.remove();
       const row = document.createElement('div');
-      row.className = 'page-ref-row'; row.dataset.refIdx = idx;
+      row.className = 'page-ref-row'; row.dataset.refIdx = idx; row.dataset.refType = 'pdf';
       row.innerHTML = `
+        <select class="ref-type-select" style="flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px;color:var(--ink-soft);cursor:pointer;max-width:100px">
+          <option value="pdf" selected>PDF pagina</option>
+          <option value="image">Afbeelding</option>
+        </select>
         <div class="pf">
           <input type="number" class="from-input" min="1" max="${maxP}" placeholder="van">
           <button class="pick-btn" data-act="pick-from" data-ref-idx="${idx}" ${dis} type="button">
