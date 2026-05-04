@@ -547,6 +547,16 @@ mark { background: rgba(184,85,64,.18); color: inherit; padding: 0 2px; border-r
   animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── visibility ── */
+.sign.hidden-sign { opacity: .35; }
+.sign.hidden-sign .sign-name { text-decoration: line-through; }
+.category.hidden-cat > .category-header .category-name { text-decoration: line-through; opacity: .45; }
+.category.hidden-cat > ul, .category.hidden-cat > .add-row { opacity: .35; pointer-events: none; }
+body.edit-mode .category.hidden-cat > ul,
+body.edit-mode .category.hidden-cat > .add-row { pointer-events: auto; }
+.eye-btn { color: var(--ink-faint); }
+.eye-btn.hidden { color: var(--warm); }
 </style>
 </head>
 <body>
@@ -807,7 +817,9 @@ function renderIndex() {
   let html = '', n = 1, total = 0;
 
   for (const cat of state.data.categories) {
+    if (!state.editMode && cat.hidden) { n++; continue; }
     const filtered = cat.items.filter(it => {
+      if (!state.editMode && it.hidden) return false;
       if (!f) return true;
       return [it.name, it.translation, it.note, cat.name, allPagesLabel(it)||'']
         .filter(Boolean).join(' ').toLowerCase().includes(f);
@@ -815,13 +827,14 @@ function renderIndex() {
     if (!filtered.length && f) { n++; continue; }
     total += filtered.length;
 
-    html += `<section class="category" data-cat-id="${esc(cat.id)}">`;
+    html += `<section class="category ${cat.hidden ? 'hidden-cat' : ''}" data-cat-id="${esc(cat.id)}">`;
     html += `<div class="category-header">
       <span class="category-num">${String(n).padStart(2,'0')}</span>
       <span class="category-name">${hi(cat.name, f)}</span>
       <div class="category-actions">
         <button class="mini-btn" data-act="cat-up" type="button" title="Omhoog"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 7l2.5-2.5L8 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button class="mini-btn" data-act="cat-down" type="button" title="Omlaag"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 4l2.5 2.5L8 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn eye-btn ${cat.hidden ? 'hidden' : ''}" data-act="cat-toggle" type="button" title="${cat.hidden ? 'Toon' : 'Verberg'}">${cat.hidden ? `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 9M4.5 2.5A5 5 0 0 1 9.5 5.5M1.5 5.5A5 5 0 0 0 5.5 8.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>` : `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><ellipse cx="5.5" cy="5.5" rx="4" ry="2.5" stroke="currentColor" stroke-width="1.2"/><circle cx="5.5" cy="5.5" r="1.3" fill="currentColor"/></svg>`}</button>
         <button class="mini-btn" data-act="cat-rename" type="button" title="Hernoem"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M8 1.5l1.5 1.5L4 8.5l-2 .5.5-2L8 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
         <button class="mini-btn danger" data-act="cat-delete" type="button" title="Verwijder categorie"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 3h7M4 3V2h3v1M3.5 3l.4 6h3.2l.4-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
       </div>
@@ -844,7 +857,7 @@ function renderIndex() {
 }
 
 function renderSignRow(it, catId, f) {
-  const cls = state.activeSignId === it.id ? 'sign active' : 'sign';
+  const cls = [state.activeSignId === it.id ? 'sign active' : 'sign', it.hidden ? 'hidden-sign' : ''].join(' ').trim();
   const transl = it.translation ? `<span class="sign-translation">${hi(it.translation,f)}</span>` : '';
   const note = it.note ? `<span class="sign-note">${hi(it.note,f)}</span>` : '';
 
@@ -869,6 +882,7 @@ function renderSignRow(it, catId, f) {
       <div class="sign-actions">
         <button class="mini-btn" data-act="sign-up" type="button" title="Omhoog"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 7l2.5-2.5L8 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button class="mini-btn" data-act="sign-down" type="button" title="Omlaag"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 4l2.5 2.5L8 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn eye-btn ${it.hidden ? 'hidden' : ''}" data-act="sign-toggle" type="button" title="${it.hidden ? 'Toon' : 'Verberg'}">${it.hidden ? `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 9M4.5 2.5A5 5 0 0 1 9.5 5.5M1.5 5.5A5 5 0 0 0 5.5 8.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>` : `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><ellipse cx="5.5" cy="5.5" rx="4" ry="2.5" stroke="currentColor" stroke-width="1.2"/><circle cx="5.5" cy="5.5" r="1.3" fill="currentColor"/></svg>`}</button>
         <button class="mini-btn" data-act="sign-edit" type="button" title="Bewerk"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M8 1.5l1.5 1.5L4 8.5l-2 .5.5-2L8 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
         <button class="mini-btn danger" data-act="sign-delete" type="button" title="Verwijder"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 3h7M4 3V2h3v1M3.5 3l.4 6h3.2l.4-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
       </div>
@@ -970,6 +984,11 @@ function handleSignAction(act, signId, catId) {
       state.editingSignId = state.editingSignId === signId ? null : signId;
       renderIndex();
       break;
+    case 'sign-toggle':
+      cat.items[idx].hidden = !cat.items[idx].hidden;
+      persist(); renderIndex();
+      toast(cat.items[idx].hidden ? 'Verborgen' : 'Zichtbaar');
+      break;
     case 'sign-delete':
       if (confirm(`"${cat.items[idx].name}" verwijderen?`)) {
         cat.items.splice(idx, 1);
@@ -993,6 +1012,11 @@ function handleCatAction(act, catId) {
       if (n && n.trim() && n !== cat.name) { cat.name = n.trim(); persist(); renderIndex(); }
       break;
     }
+    case 'cat-toggle':
+      cat.hidden = !cat.hidden;
+      persist(); renderIndex();
+      toast(cat.hidden ? 'Categorie verborgen' : 'Categorie zichtbaar');
+      break;
     case 'cat-delete':
       if (confirm(`Categorie "${cat.name}" verwijderen met alle signs?`)) {
         if (cat.items.some(it => it.id === state.activeSignId)) state.activeSignId = null;
@@ -1570,6 +1594,56 @@ $('content').addEventListener('click', e => {
 $('content').addEventListener('submit', e => {
   if (e.target.classList.contains('edit-form')) { e.preventDefault(); saveEditForm(e.target); }
 });
+$('content').addEventListener('change', e => {
+  const sel = e.target.closest('.ref-type-select');
+  if (!sel) return;
+  const row = sel.closest('.page-ref-row');
+  if (!row) return;
+  const newType = sel.value;
+  const idx = row.dataset.refIdx;
+  const maxP = state.pdfDoc ? state.pdfDoc.numPages : 999;
+  const hasPdf = !!state.pdfDoc;
+  const dis = hasPdf ? '' : 'disabled';
+
+  const typeSelect = `<select class="ref-type-select" style="flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px;color:var(--ink-soft);cursor:pointer;max-width:100px">
+    <option value="pdf" ${newType==='pdf'?'selected':''}>PDF pagina</option>
+    <option value="image" ${newType==='image'?'selected':''}>Afbeelding</option>
+  </select>`;
+
+  const delBtn = `<button class="del-ref-btn" data-act="del-ref" data-ref-idx="${idx}" type="button" title="Verwijder">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </button>`;
+
+  let fields = '';
+  if (newType === 'image') {
+    fields = `<input type="text" class="url-input" placeholder="https://..." style="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">
+    <input type="text" class="label-input" placeholder="naam (opt.)" style="width:80px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">`;
+  } else {
+    fields = `<div class="pf">
+      <input type="number" class="from-input" min="1" max="${maxP}" placeholder="van">
+      <button class="pick-btn" data-act="pick-from" data-ref-idx="${idx}" ${dis} type="button">
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Kies
+      </button>
+    </div>
+    <span class="pf-sep">t/m (opt.)</span>
+    <div class="pf">
+      <input type="number" class="to-input" min="1" max="${maxP}" placeholder="\u2014">
+      <button class="pick-btn" data-act="pick-to" data-ref-idx="${idx}" ${dis} type="button">
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Kies
+      </button>
+    </div>`;
+  }
+
+  row.dataset.refType = newType;
+  row.innerHTML = typeSelect + fields + delBtn;
+  row.querySelector('.ref-type-select').value = newType;
+  if (newType === 'image') row.querySelector('.url-input')?.focus();
+  else row.querySelector('.from-input')?.focus();
+});
+
+
 
 // page-ref strip click
 $('pageRefStrip').addEventListener('click', e => {
