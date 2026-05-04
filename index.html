@@ -1993,16 +1993,6 @@ async function init() {
   renderIndex();
   await tryAutoLoad();
   // Select first sign by default
-  selectFirstSign();
-}
-
-function selectFirstSign() {
-  const cat = state.data.categories.find(c => c.items.length > 0);
-  if (!cat) return;
-  const item = cat.items[0];
-  showSign(item, cat, 0);
-  state.activeSignId = item.id;
-  renderIndex();
 }
 
 init();
@@ -3883,16 +3873,6 @@ async function init() {
   renderIndex();
   await tryAutoLoad();
   // Select first sign by default
-  selectFirstSign();
-}
-
-function selectFirstSign() {
-  const cat = state.data.categories.find(c => c.items.length > 0);
-  if (!cat) return;
-  const item = cat.items[0];
-  showSign(item, cat, 0);
-  state.activeSignId = item.id;
-  renderIndex();
 }
 
 init();
