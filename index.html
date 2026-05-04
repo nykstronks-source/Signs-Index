@@ -1111,28 +1111,30 @@ async function loadPDFFromBuffer(buf, name) {
   } catch(e) { console.error(e); toast('Kon PDF niet laden','error'); return false; }
 }
 
-async function loadPDFStreaming(url, name) {
-  // Use pdf.js range requests — loads only needed pages, not the whole file
+async function loadPDFFromURL(url, name) {
+  // pdf.js fetches only what it needs via HTTP range requests — no full download
   try {
-    state.pdfDoc = await pdfjsLib.getDocument({
+    const loadingTask = pdfjsLib.getDocument({
       url,
-      rangeChunkSize: 65536,   // 64KB chunks
-      disableAutoFetch: true,  // don't prefetch everything
+      rangeChunkSize: 65536,
+      disableAutoFetch: false,
       disableStream: false,
-    }).promise;
+      withCredentials: false,
+    });
+    state.pdfDoc = await loadingTask.promise;
     state.pdfFileName = name;
     $('pdfFileName').textContent = name;
     $('pdfBanner').style.display = '';
     return true;
   } catch(e) {
-    console.error('Streaming failed, falling back to full fetch', e);
+    console.error('URL streaming failed:', e);
     return false;
   }
 }
 
 async function handlePDFFile(file) {
   if (!file) return;
-  $('viewerFrame').innerHTML = `<div class="empty-state"><div class="spinner"></div><p style="margin-top:18px">PDF wordt geladen…</p></div>`;
+  showPDFLoading(0);
   try {
     const buf = await file.arrayBuffer();
     const ok = await loadPDFFromBuffer(buf.slice(0), file.name);
@@ -1144,26 +1146,75 @@ async function handlePDFFile(file) {
       }
       showWelcome();
     }
-  } catch(e) { toast('Kon PDF niet laden','error'); }
+  } catch(e) { toast('Kon PDF niet laden','error'); showInitialEmpty(); }
+}
+
+function showPDFLoading(pct) {
+  $('viewerFrame').innerHTML = `
+    <div class="empty-state">
+      <svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <h2>Handboek laden…</h2>
+      <div style="width:220px;background:var(--line-soft);border-radius:99px;height:6px;margin-top:16px;overflow:hidden">
+        <div id="pdfProgressBar" style="height:100%;background:var(--accent);border-radius:99px;width:${pct}%;transition:width .3s"></div>
+      </div>
+      <p style="margin-top:10px;font-size:12.5px;color:var(--ink-faint)" id="pdfProgressPct">${pct}%</p>
+      <p style="font-size:13px;margin-top:6px">Je kan al een sign selecteren links.</p>
+    </div>`;
+}
+
+async function fetchWithProgress(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const total = parseInt(resp.headers.get('Content-Length') || '0');
+  const reader = resp.body.getReader();
+  const chunks = [];
+  let received = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    if (total) {
+      const pct = Math.round(received / total * 100);
+      const bar = document.getElementById('pdfProgressBar');
+      const lbl = document.getElementById('pdfProgressPct');
+      if (bar) bar.style.width = pct + '%';
+      if (lbl) lbl.textContent = pct + '%';
+    }
+  }
+  const buf = new Uint8Array(received);
+  let pos = 0;
+  for (const chunk of chunks) { buf.set(chunk, pos); pos += chunk.length; }
+  return buf.buffer;
 }
 
 async function tryLoadServer() {
   try {
-    // Show loading immediately but don't block — streaming starts fast
-    $('viewerFrame').innerHTML = `<div class="empty-state"><div class="spinner"></div><p style="margin-top:18px">Handboek laden…</p></div>`;
-
-    // Try streaming first (instant first page)
-    const ok = await loadPDFStreaming(PDF_URL, 'manual.pdf');
+    showPDFLoading(0);
+    // Try streaming first (fast — only fetches needed pages)
+    const streamOk = await loadPDFFromURL(PDF_URL, 'manual.pdf');
+    if (streamOk) return true;
+    // Fallback: full download with progress bar
+    const buf = await fetchWithProgress(PDF_URL);
+    const ok = await loadPDFFromBuffer(buf.slice(0), 'manual.pdf');
+    if (ok) await Storage.savePDF(buf.slice(0), 'manual.pdf');
     return ok;
-  } catch(e) { showInitialEmpty(); return false; }
+  } catch(e) {
+    console.error('Server load failed:', e);
+    return false;
+  }
 }
 
 async function tryAutoLoad() {
+  // Try cache first — instant if available
+  const cached = await Storage.loadPDF();
+  if (cached) {
+    const ok = await loadPDFFromBuffer(cached.buffer, cached.name);
+    if (ok) { showWelcome(); return; }
+  }
+  // Stream from server (or full download as fallback)
   const ok = await tryLoadServer();
   if (ok) { showWelcome(); return; }
-  // Fallback: cached version in IndexedDB
-  const cached = await Storage.loadPDF();
-  if (cached) { await loadPDFFromBuffer(cached.buffer, cached.name); showWelcome(); return; }
   showInitialEmpty();
 }
 
@@ -2994,28 +3045,30 @@ async function loadPDFFromBuffer(buf, name) {
   } catch(e) { console.error(e); toast('Kon PDF niet laden','error'); return false; }
 }
 
-async function loadPDFStreaming(url, name) {
-  // Use pdf.js range requests — loads only needed pages, not the whole file
+async function loadPDFFromURL(url, name) {
+  // pdf.js fetches only what it needs via HTTP range requests — no full download
   try {
-    state.pdfDoc = await pdfjsLib.getDocument({
+    const loadingTask = pdfjsLib.getDocument({
       url,
-      rangeChunkSize: 65536,   // 64KB chunks
-      disableAutoFetch: true,  // don't prefetch everything
+      rangeChunkSize: 65536,
+      disableAutoFetch: false,
       disableStream: false,
-    }).promise;
+      withCredentials: false,
+    });
+    state.pdfDoc = await loadingTask.promise;
     state.pdfFileName = name;
     $('pdfFileName').textContent = name;
     $('pdfBanner').style.display = '';
     return true;
   } catch(e) {
-    console.error('Streaming failed, falling back to full fetch', e);
+    console.error('URL streaming failed:', e);
     return false;
   }
 }
 
 async function handlePDFFile(file) {
   if (!file) return;
-  $('viewerFrame').innerHTML = `<div class="empty-state"><div class="spinner"></div><p style="margin-top:18px">PDF wordt geladen…</p></div>`;
+  showPDFLoading(0);
   try {
     const buf = await file.arrayBuffer();
     const ok = await loadPDFFromBuffer(buf.slice(0), file.name);
@@ -3027,26 +3080,75 @@ async function handlePDFFile(file) {
       }
       showWelcome();
     }
-  } catch(e) { toast('Kon PDF niet laden','error'); }
+  } catch(e) { toast('Kon PDF niet laden','error'); showInitialEmpty(); }
+}
+
+function showPDFLoading(pct) {
+  $('viewerFrame').innerHTML = `
+    <div class="empty-state">
+      <svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <h2>Handboek laden…</h2>
+      <div style="width:220px;background:var(--line-soft);border-radius:99px;height:6px;margin-top:16px;overflow:hidden">
+        <div id="pdfProgressBar" style="height:100%;background:var(--accent);border-radius:99px;width:${pct}%;transition:width .3s"></div>
+      </div>
+      <p style="margin-top:10px;font-size:12.5px;color:var(--ink-faint)" id="pdfProgressPct">${pct}%</p>
+      <p style="font-size:13px;margin-top:6px">Je kan al een sign selecteren links.</p>
+    </div>`;
+}
+
+async function fetchWithProgress(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const total = parseInt(resp.headers.get('Content-Length') || '0');
+  const reader = resp.body.getReader();
+  const chunks = [];
+  let received = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    if (total) {
+      const pct = Math.round(received / total * 100);
+      const bar = document.getElementById('pdfProgressBar');
+      const lbl = document.getElementById('pdfProgressPct');
+      if (bar) bar.style.width = pct + '%';
+      if (lbl) lbl.textContent = pct + '%';
+    }
+  }
+  const buf = new Uint8Array(received);
+  let pos = 0;
+  for (const chunk of chunks) { buf.set(chunk, pos); pos += chunk.length; }
+  return buf.buffer;
 }
 
 async function tryLoadServer() {
   try {
-    // Show loading immediately but don't block — streaming starts fast
-    $('viewerFrame').innerHTML = `<div class="empty-state"><div class="spinner"></div><p style="margin-top:18px">Handboek laden…</p></div>`;
-
-    // Try streaming first (instant first page)
-    const ok = await loadPDFStreaming(PDF_URL, 'manual.pdf');
+    showPDFLoading(0);
+    // Try streaming first (fast — only fetches needed pages)
+    const streamOk = await loadPDFFromURL(PDF_URL, 'manual.pdf');
+    if (streamOk) return true;
+    // Fallback: full download with progress bar
+    const buf = await fetchWithProgress(PDF_URL);
+    const ok = await loadPDFFromBuffer(buf.slice(0), 'manual.pdf');
+    if (ok) await Storage.savePDF(buf.slice(0), 'manual.pdf');
     return ok;
-  } catch(e) { showInitialEmpty(); return false; }
+  } catch(e) {
+    console.error('Server load failed:', e);
+    return false;
+  }
 }
 
 async function tryAutoLoad() {
+  // Try cache first — instant if available
+  const cached = await Storage.loadPDF();
+  if (cached) {
+    const ok = await loadPDFFromBuffer(cached.buffer, cached.name);
+    if (ok) { showWelcome(); return; }
+  }
+  // Stream from server (or full download as fallback)
   const ok = await tryLoadServer();
   if (ok) { showWelcome(); return; }
-  // Fallback: cached version in IndexedDB
-  const cached = await Storage.loadPDF();
-  if (cached) { await loadPDFFromBuffer(cached.buffer, cached.name); showWelcome(); return; }
   showInitialEmpty();
 }
 
