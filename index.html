@@ -1,0 +1,3855 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Signs — Freeplay / Ritmo con Signs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root {
+  --bg: #f4eee2;
+  --bg-soft: #ece6d6;
+  --paper: #fbf8f1;
+  --paper-warm: #f7f2e6;
+  --line: #d9cfb8;
+  --line-soft: #e6dfca;
+  --ink: #1d2333;
+  --ink-soft: #5e6477;
+  --ink-faint: #8a8f9f;
+  --accent: #2c5874;
+  --accent-deep: #1f4459;
+  --accent-soft: #c4d6e0;
+  --accent-tint: #e3edf3;
+  --warm: #b85540;
+  --warm-soft: #f4e3dd;
+  --ok: #3a6a47;
+  --ok-soft: #dde9df;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  background: var(--bg); color: var(--ink);
+  font-weight: 400; line-height: 1.5;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* ── layout ── */
+.app {
+  display: grid;
+  grid-template-columns: minmax(380px, 460px) 1fr;
+  height: 100vh;
+}
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  body.viewer-open .index-panel { display: none; }
+  body:not(.viewer-open) .viewer-panel { display: none; }
+  .viewer-panel { height: 100vh; }
+  .back-btn { display: inline-flex !important; }
+  header.index-header { padding: 22px 22px 14px; }
+  h1 { font-size: 30px; }
+  .content { padding: 14px 22px 60px; }
+}
+.index-panel {
+  background: var(--paper);
+  border-right: 1px solid var(--line);
+  overflow-y: auto; display: flex; flex-direction: column;
+}
+.viewer-panel {
+  background: var(--bg-soft);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ── header ── */
+header.index-header {
+  padding: 26px 28px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  position: sticky; top: 0; z-index: 10;
+}
+.header-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 4px; gap: 12px;
+}
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 8px;
+}
+h1 {
+  font-family: 'Fraunces', serif; font-weight: 500;
+  font-size: 34px; line-height: 1; letter-spacing: -.02em;
+  color: var(--ink); margin-bottom: 4px;
+}
+h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+.tagline { color: var(--ink-soft); font-size: 13.5px; margin-bottom: 16px; }
+.header-actions { display: none !important; }
+.index-bottom-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 24px; border-top: 1px solid var(--line-soft);
+  background: var(--paper); flex-shrink: 0;
+  position: sticky; bottom: 0; z-index: 5;
+}
+.edit-mode-label {
+  font-size: 12.5px; color: var(--ink-faint);
+  font-family: 'IBM Plex Mono', monospace; flex: 1;
+  transition: color .15s;
+}
+body.edit-mode .edit-mode-label { color: var(--accent); font-weight: 500; }
+body.edit-mode #editToggle { background: var(--accent); color: white; border-color: var(--accent); }
+
+.icon-btn {
+  width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid var(--line);
+  border-radius: 5px; cursor: pointer; color: var(--ink-soft);
+  transition: all .12s;
+}
+.icon-btn:hover { background: var(--bg); color: var(--ink); border-color: var(--accent-soft); }
+.icon-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.icon-btn.active:hover { background: var(--accent-deep); }
+
+/* ── search ── */
+.search-wrap { position: relative; }
+.search-input {
+  width: 100%; padding: 10px 36px 10px 38px;
+  border: 1px solid var(--line); background: #fefcf6;
+  border-radius: 6px; font-size: 14px; color: var(--ink);
+  transition: all .15s;
+}
+.search-input::placeholder { color: var(--ink-faint); }
+.search-input:focus {
+  outline: none; border-color: var(--accent);
+  background: #fff; box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.search-icon {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%); color: var(--ink-faint); pointer-events: none;
+}
+.search-clear {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px; border: none; background: transparent;
+  color: var(--ink-faint); cursor: pointer; border-radius: 50%;
+  display: none; align-items: center; justify-content: center;
+}
+.search-clear:hover { background: var(--bg); color: var(--ink); }
+.search-input:not(:placeholder-shown) ~ .search-clear { display: flex; }
+
+/* ── content ── */
+.content { padding: 16px 28px 80px; }
+.category { margin-bottom: 20px; }
+.category-header {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-bottom: 8px; padding: 6px 0 6px 4px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.category-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; color: var(--accent); font-weight: 500; letter-spacing: .05em;
+}
+.category-name {
+  font-family: 'Fraunces', serif; font-size: 15px; font-weight: 500;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--ink); flex: 1;
+}
+.category-actions { display: none; gap: 4px; }
+body.edit-mode .category-actions { display: flex; }
+
+.mini-btn {
+  width: 24px; height: 24px; border: 1px solid transparent;
+  background: transparent; border-radius: 4px; cursor: pointer;
+  color: var(--ink-faint); display: inline-flex; align-items: center;
+  justify-content: center; transition: all .12s;
+}
+.mini-btn:hover { background: var(--bg); color: var(--ink); border-color: var(--line-soft); }
+.mini-btn.danger:hover { background: var(--warm-soft); color: var(--warm); border-color: var(--warm); }
+
+.signs { list-style: none; }
+.sign {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start; gap: 8px;
+  padding: 8px 10px 8px 12px; border-radius: 6px;
+  cursor: pointer; transition: background .12s;
+  border-left: 2px solid transparent;
+}
+.sign:hover { background: var(--bg); }
+.sign.active { background: var(--accent-tint); border-left-color: var(--accent); }
+
+.sign-handle { display: none; flex-direction: column; gap: 1px; color: var(--ink-faint); padding-top: 4px; }
+body.edit-mode .sign-handle { display: flex; }
+
+.sign-text { line-height: 1.4; min-width: 0; grid-column: 2; }
+.sign-name { font-size: 14.5px; font-weight: 500; }
+.sign-translation { font-size: 13px; color: var(--ink-soft); font-style: italic; margin-left: 6px; }
+.sign-translation::before { content: '→ '; font-style: normal; color: var(--ink-faint); }
+.sign-note { display: block; font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; font-style: italic; }
+
+.sign-right { display: flex; align-items: flex-start; gap: 4px; }
+.page-badges { display: flex; flex-wrap: wrap; gap: 3px; justify-content: flex-end; }
+.page-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; color: var(--accent);
+  background: var(--bg); padding: 3px 8px;
+  border-radius: 4px; border: 1px solid var(--line-soft);
+  white-space: nowrap; font-weight: 500; cursor: pointer;
+  transition: all .1s;
+}
+.page-badge:hover, .page-badge.active-ref { background: var(--accent); color: white; border-color: var(--accent); }
+.sign.active .page-badge { background: #fff; border-color: var(--accent-soft); }
+.sign.active .page-badge:hover, .sign.active .page-badge.active-ref { background: var(--accent); color: white; }
+.page-badge.no-page { color: var(--ink-faint); cursor: default; }
+.page-badge.no-page:hover { background: var(--bg); color: var(--ink-faint); border-color: var(--line-soft); }
+
+.sign-actions { display: none; gap: 2px; margin-top: 1px; flex-shrink: 0; }
+body.edit-mode .sign-actions { display: flex; }
+body.edit-mode .page-badge { font-size: 11px; padding: 2px 6px; }
+
+/* ── edit form ── */
+.edit-form {
+  margin: 6px 0 12px; padding: 14px;
+  background: var(--paper-warm); border: 1px solid var(--line);
+  border-radius: 8px; display: grid; gap: 12px;
+}
+.edit-form label {
+  font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-soft); display: block; margin-bottom: 3px;
+}
+.edit-form input[type="text"],
+.edit-form input[type="number"],
+.edit-form textarea {
+  width: 100%; padding: 7px 10px;
+  border: 1px solid var(--line); background: #fff;
+  border-radius: 5px; font-size: 13.5px; color: var(--ink);
+  transition: border-color .12s, box-shadow .12s;
+}
+.edit-form input:focus, .edit-form textarea:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.edit-form textarea { resize: vertical; min-height: 36px; font-family: inherit; }
+.edit-form .form-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+  padding-top: 10px; border-top: 1px solid var(--line-soft);
+}
+.help { font-size: 11.5px; color: var(--ink-faint); line-height: 1.4; }
+
+/* ── pages list in edit form ── */
+.pages-label {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.pages-list { display: grid; gap: 6px; }
+.page-ref-row {
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  background: white; border: 1px solid var(--line);
+  border-radius: 6px; padding: 7px 8px;
+}
+.page-ref-row .pf { display: flex; align-items: center; gap: 4px; }
+.page-ref-row .pf-sep { color: var(--ink-faint); font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+.page-ref-row input[type="number"] {
+  width: 60px; flex-shrink: 0; padding: 4px 6px;
+  font-size: 13px; border: 1px solid var(--line);
+  border-radius: 5px; background: var(--bg); text-align: center;
+}
+.page-ref-row input:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-tint); background: #fff;
+}
+.pick-btn {
+  flex-shrink: 0; padding: 4px 7px;
+  border: 1px solid var(--line); background: transparent;
+  border-radius: 5px; cursor: pointer; font-size: 11px;
+  color: var(--accent); white-space: nowrap;
+  transition: all .12s; display: flex; align-items: center; gap: 3px;
+}
+.pick-btn:hover { background: var(--accent-tint); border-color: var(--accent-soft); }
+.pick-btn:disabled { opacity: .35; cursor: not-allowed; }
+.del-ref-btn {
+  flex-shrink: 0; width: 26px; height: 26px;
+  border: 1px solid transparent; background: transparent;
+  border-radius: 4px; cursor: pointer; color: var(--ink-faint);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.del-ref-btn:hover { background: var(--warm-soft); color: var(--warm); border-color: var(--warm); }
+.add-page-ref-btn {
+  align-self: flex-start; padding: 5px 11px;
+  border: 1px dashed var(--line); background: transparent;
+  border-radius: 5px; cursor: pointer; font-size: 12.5px;
+  color: var(--ink-soft); transition: all .12s;
+}
+.add-page-ref-btn:hover { background: var(--bg); color: var(--accent); border-color: var(--accent-soft); }
+.pages-empty { font-size: 12.5px; color: var(--ink-faint); font-style: italic; padding: 4px 0; }
+
+/* ── add buttons (edit mode) ── */
+.add-row { display: none; padding: 6px 12px; margin-top: 4px; }
+body.edit-mode .add-row { display: flex; }
+.add-btn {
+  background: transparent; color: var(--ink-soft);
+  border: 1px dashed var(--line); padding: 6px 12px;
+  border-radius: 5px; cursor: pointer; font-size: 12.5px;
+  transition: all .12s; width: 100%;
+}
+.add-btn:hover { background: var(--bg); color: var(--accent); border-color: var(--accent-soft); }
+.add-category-row { display: none; padding: 12px 0 24px; border-top: 1px dashed var(--line); margin-top: 16px; }
+body.edit-mode .add-category-row { display: block; }
+
+/* ── buttons ── */
+.btn {
+  padding: 7px 14px; border-radius: 5px; cursor: pointer;
+  font-size: 13px; font-weight: 500; border: 1px solid transparent;
+  transition: all .12s;
+}
+.btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-deep); }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn-ghost:hover { background: var(--bg); }
+.btn-danger { background: transparent; color: var(--warm); border-color: var(--warm-soft); }
+.btn-danger:hover { background: var(--warm-soft); }
+
+/* ── pdf banner ── */
+.pdf-banner {
+  margin: auto 24px 16px; padding: 9px 12px;
+  background: var(--bg); border: 1px solid var(--line-soft);
+  border-radius: 6px; display: flex; align-items: center;
+  justify-content: space-between; gap: 10px;
+  font-size: 12px; color: var(--ink-soft); flex-shrink: 0;
+}
+.pdf-banner .ok { color: var(--ok); }
+.pdf-banner .file-name {
+  font-family: 'IBM Plex Mono', monospace; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;
+}
+.link-btn {
+  background: transparent; border: none; color: var(--accent);
+  cursor: pointer; text-decoration: underline;
+  text-decoration-color: var(--accent-soft); text-underline-offset: 3px; font-size: 12px;
+}
+.link-btn:hover { color: var(--accent-deep); text-decoration-color: var(--accent); }
+
+/* ── viewer ── */
+.viewer-header {
+  padding: 14px 24px;
+  background: var(--paper); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; min-height: 64px;
+}
+.viewer-titles { flex: 1; min-width: 0; }
+.viewer-title {
+  font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500;
+  color: var(--ink); line-height: 1.2; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.viewer-meta {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+  color: var(--ink-soft); margin-top: 3px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── page-ref strip (multi-page) ── */
+.page-ref-strip {
+  padding: 8px 24px; background: var(--paper);
+  border-bottom: 1px solid var(--line-soft);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.page-ref-strip-label {
+  font-size: 11.5px; color: var(--ink-faint);
+  font-family: 'IBM Plex Mono', monospace; margin-right: 4px; flex-shrink: 0;
+}
+.strip-btn {
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+  padding: 4px 10px; border-radius: 4px;
+  border: 1px solid var(--line); background: var(--bg);
+  color: var(--accent); cursor: pointer; transition: all .12s; white-space: nowrap;
+}
+.strip-btn:hover { background: var(--accent-tint); border-color: var(--accent-soft); }
+.strip-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* ── viewer controls ── */
+.viewer-controls { display: flex; align-items: center; gap: 6px; }
+.ctrl-btn {
+  width: 32px; height: 32px; display: inline-flex; align-items: center;
+  justify-content: center; background: transparent; border: 1px solid var(--line);
+  border-radius: 5px; cursor: pointer; color: var(--ink); transition: all .12s;
+}
+.ctrl-btn:hover:not(:disabled) { background: var(--bg); border-color: var(--accent-soft); }
+.ctrl-btn:disabled { opacity: .4; cursor: not-allowed; }
+.ctrl-zoom {
+  width: auto; padding: 0 10px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px; color: var(--ink-soft); pointer-events: none;
+}
+.viewer-frame {
+  flex: 1; overflow: auto; padding: 12px;
+  display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+  gap: 12px; min-height: 0;
+  background: radial-gradient(ellipse at top, rgba(255,255,255,.4), transparent 60%), var(--bg-soft);
+}
+.pdf-canvas {
+  height: auto; max-width: 100%; flex-shrink: 0;
+  box-shadow: 0 1px 0 rgba(29,35,51,.04), 0 8px 24px -8px rgba(29,35,51,.18), 0 24px 48px -16px rgba(29,35,51,.12);
+  background: white; border-radius: 2px;
+}
+
+/* ── back btn ── */
+.back-btn {
+  display: none; align-items: center; gap: 6px; padding: 7px 12px;
+  background: transparent; border: 1px solid var(--line);
+  border-radius: 5px; cursor: pointer; font-size: 13px; color: var(--ink); flex-shrink: 0;
+}
+.back-btn:hover { background: var(--bg); }
+
+/* ── empty state ── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; width: 100%; min-height: 100%;
+  padding: 40px; text-align: center; color: var(--ink-soft);
+}
+.empty-illustration { width: 96px; height: 96px; margin-bottom: 24px; color: var(--ink-faint); opacity: .5; }
+.empty-state h2 {
+  font-family: 'Fraunces', serif; font-weight: 500; font-size: 24px;
+  color: var(--ink); margin-bottom: 10px; letter-spacing: -.01em;
+}
+.empty-state p { max-width: 400px; margin-bottom: 6px; font-size: 14px; line-height: 1.55; }
+.empty-state .pagenum {
+  font-family: 'IBM Plex Mono', monospace; font-size: 28px;
+  color: var(--accent); margin: 14px 0 6px; font-weight: 500;
+}
+.empty-state .actions { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.file-picker {
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
+  background: var(--accent); color: white; border-radius: 6px;
+  cursor: pointer; font-size: 14px; font-weight: 500;
+  transition: all .15s; border: none;
+}
+.file-picker:hover { background: var(--accent-deep); }
+.file-picker input { display: none; }
+
+/* ── settings menu ── */
+.settings-menu {
+  position: absolute; top: 56px; right: 28px;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px -8px rgba(29,35,51,.18), 0 4px 8px -4px rgba(29,35,51,.08);
+  padding: 6px; z-index: 100; min-width: 220px; display: none;
+}
+.settings-menu.show { display: block; }
+.menu-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  border: none; background: transparent; width: 100%;
+  text-align: left; cursor: pointer; border-radius: 4px;
+  font-size: 13.5px; color: var(--ink); transition: background .1s;
+}
+.menu-item:hover { background: var(--bg); }
+.menu-item.danger { color: var(--warm); }
+.menu-item.danger:hover { background: var(--warm-soft); }
+.menu-item svg { color: var(--ink-soft); flex-shrink: 0; }
+.menu-item.danger svg { color: var(--warm); }
+.menu-divider { height: 1px; background: var(--line-soft); margin: 4px 0; }
+
+/* ── page picker overlay ── */
+.picker-overlay {
+  position: fixed; inset: 0; background: rgba(29,35,51,.55);
+  z-index: 200; display: flex; align-items: center; justify-content: center;
+  padding: 24px; backdrop-filter: blur(2px);
+  animation: fadeIn .15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.picker-box {
+  background: var(--paper); border-radius: 12px;
+  box-shadow: 0 24px 64px -16px rgba(29,35,51,.36), 0 8px 24px -8px rgba(29,35,51,.14);
+  width: min(820px, 100%); max-height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: slideUp .18s ease;
+}
+@keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.picker-header {
+  padding: 18px 22px 14px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-shrink: 0;
+}
+.picker-header h3 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 18px; }
+.picker-header p { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+.picker-close {
+  width: 30px; height: 30px; border: 1px solid var(--line); background: transparent;
+  border-radius: 5px; cursor: pointer; color: var(--ink);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .12s;
+}
+.picker-close:hover { background: var(--bg); }
+.picker-nav {
+  padding: 12px 22px; border-bottom: 1px solid var(--line-soft);
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap;
+}
+.picker-page-input { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-soft); }
+.picker-page-input input {
+  width: 60px; padding: 5px 8px; border: 1px solid var(--line);
+  background: #fff; border-radius: 5px; font-size: 13px; text-align: center;
+}
+.picker-page-input input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-tint); }
+.picker-select-btns { display: flex; gap: 6px; margin-left: auto; }
+.picker-body {
+  flex: 1; overflow: auto; padding: 20px;
+  display: flex; justify-content: center; background: var(--bg-soft); min-height: 300px;
+}
+.picker-canvas {
+  max-width: 100%; height: auto;
+  box-shadow: 0 4px 24px -8px rgba(29,35,51,.22), 0 12px 40px -16px rgba(29,35,51,.12);
+  background: white; border-radius: 2px;
+  border: 2px solid transparent; transition: border-color .15s; cursor: pointer;
+}
+.picker-canvas:hover { border-color: var(--accent); }
+.picker-footer {
+  padding: 12px 22px; border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0;
+}
+.picker-info { font-size: 12.5px; color: var(--ink-soft); }
+.picker-info strong { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--accent); }
+
+/* ── toast ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--ink); color: var(--paper);
+  padding: 10px 18px; border-radius: 6px; font-size: 13.5px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  transition: transform .25s ease; z-index: 1000; pointer-events: none; max-width: 80%;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--warm); }
+.toast.success { background: var(--ok); }
+
+/* ── storage warning ── */
+.storage-warning {
+  background: var(--warm-soft); border-left: 3px solid var(--warm);
+  padding: 10px 14px; margin: 12px 28px 0;
+  font-size: 12.5px; color: var(--ink); border-radius: 4px; line-height: 1.45;
+}
+
+/* ── scrollbars ── */
+.index-panel::-webkit-scrollbar, .viewer-frame::-webkit-scrollbar,
+.picker-body::-webkit-scrollbar { width: 9px; height: 9px; }
+.index-panel::-webkit-scrollbar-track, .viewer-frame::-webkit-scrollbar-track,
+.picker-body::-webkit-scrollbar-track { background: transparent; }
+.index-panel::-webkit-scrollbar-thumb, .viewer-frame::-webkit-scrollbar-thumb,
+.picker-body::-webkit-scrollbar-thumb {
+  background: var(--line); border-radius: 4px; border: 2px solid transparent;
+  background-clip: content-box;
+}
+mark { background: rgba(184,85,64,.18); color: inherit; padding: 0 2px; border-radius: 2px; }
+.no-results { text-align: center; padding: 60px 20px; color: var(--ink-soft); font-size: 14px; }
+.no-results strong { color: var(--ink); font-weight: 500; }
+.spinner {
+  width: 22px; height: 22px; border: 2px solid var(--line);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── visibility ── */
+.sign.hidden-sign { opacity: .35; }
+.sign.hidden-sign .sign-name { text-decoration: line-through; }
+.category.hidden-cat > .category-header .category-name { text-decoration: line-through; opacity: .45; }
+.category.hidden-cat > ul, .category.hidden-cat > .add-row { opacity: .35; pointer-events: none; }
+body.edit-mode .category.hidden-cat > ul,
+body.edit-mode .category.hidden-cat > .add-row { pointer-events: auto; }
+.eye-btn { color: var(--ink-faint); }
+.eye-btn.hidden { color: var(--warm); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="index-panel">
+    <header class="index-header">
+      <div class="header-top">
+        <div>
+          <div class="eyebrow">Freeplay · Ritmo con Signs</div>
+          <h1>Signs <em>index</em></h1>
+        </div>
+        <div class="header-actions"></div>
+      </div>
+      
+      <div class="search-wrap">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <input type="text" class="search-input" id="search" placeholder="Zoek op naam, vertaling, pagina…" autocomplete="off">
+        <button class="search-clear" id="searchClear" type="button">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+    <div class="storage-warning" id="storageWarning" style="display:none">
+      <strong>Let op:</strong> wijzigingen worden niet opgeslagen in deze modus. Open het bestand lokaal voor volledige werking.
+    </div>
+    <div class="content" id="content"></div>
+    <div class="pdf-banner" id="pdfBanner" style="display:none">
+      <span class="ok">✓</span>
+      <span class="file-name" id="pdfFileName">Handboek geladen</span>
+      <input type="file" accept="application/pdf" id="pdfInputChange" style="display:none">
+    </div>
+    <div class="index-bottom-bar">
+      <button class="icon-btn" id="editToggle" title="Bewerken aan/uit" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2L5 13l-3 .5.5-3 9-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="edit-mode-label">Bewerkmodus</span>
+      <button class="icon-btn edit-only" id="settingsBtn" title="Meer opties" type="button" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg>
+      </button>
+    </div>
+    <div class="settings-menu" id="settingsMenu">
+      <button class="menu-item" id="exportBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 11V2m0 9l3-3m-3 3L5 8M2 13h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Exporteer als JSON
+      </button>
+      <button class="menu-item" id="publishBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v6M5 8l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Publiceer (download index.html)
+      </button>
+      <button class="menu-item" id="importBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 5v9m0-9L5 8m3-3l3 3M2 3h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Importeer JSON
+      </button>
+      <input type="file" id="importInput" accept="application/json" style="display:none">
+      <div class="menu-divider"></div>
+      <button class="menu-item" id="reloadPdfMenuItem" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 1 1 1.2 3.6M2 12V8h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        PDF opnieuw laden
+      </button>
+      <div class="menu-divider"></div>
+      <button class="menu-item" id="changePwBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        Wachtwoord wijzigen
+      </button>
+      <div class="menu-divider"></div>
+      <button class="menu-item danger" id="resetBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 5h10M6 5V3h4v2M5 5l1 9h4l1-9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Terug naar standaardlijst
+      </button>
+    </div>
+  </aside>
+
+  <main class="viewer-panel">
+    <div class="viewer-header">
+      <button class="back-btn" id="backBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 11L4.5 7l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Terug
+      </button>
+      <div class="viewer-titles">
+        <div class="viewer-title" id="viewerTitle">Geen sign geselecteerd</div>
+        <div class="viewer-meta" id="viewerMeta">Klik links op een sign</div>
+      </div>
+      <div class="viewer-controls" id="viewerControls" style="display:none">
+
+        <button class="ctrl-btn" id="zoomOut" title="Uitzoomen" type="button">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+        <span class="ctrl-btn ctrl-zoom" id="zoomLevel">100%</span>
+        <button class="ctrl-btn" id="zoomIn" title="Inzoomen" type="button">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="pageRefStrip" style="display:none" class="page-ref-strip"></div>
+    <div class="viewer-frame" id="viewerFrame"></div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════
+// DATA  (pages = [{from, to?}])
+// ══════════════════════════════════════════════
+const DEFAULT_DATA = /*DATA_START*/{"version":2,"categories":[{"id":"c1","name":"Start & Groep","items":[{"id":"s101","name":"Start","pages":[{"from":46,"to":47}]},{"id":"s102","name":"Free Contribution","pages":[{"from":48}]},{"id":"s103","name":"Uit / Stop","pages":[{"from":49}]},{"id":"s104","name":"Select","pages":[{"from":50}]},{"id":"s105","name":"Split into Sections","pages":[{"from":51}]},{"id":"s106","name":"Whole Group","pages":[{"from":52}]}]},{"id":"c3","name":"Speelwijze","items":[{"id":"s305","name":"Basis / Background","pages":[{"from":59}]},{"id":"s301","name":"Kort / Staccato","pages":[{"from":56}]},{"id":"s302","name":"Lange noot / Sustained","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/lange noot.png"}]},{"id":"s303","name":"Solo","pages":[{"from":58}]},{"id":"s304","name":"Wacht","pages":[{"from":72}]}]},{"id":"c4","name":"Ideeën & Ontwikkeling","items":[{"id":"s401","name":"New / Change Idea","pages":[{"from":114}]},{"id":"s402","name":"Support idee","pages":[{"from":60}]},{"id":"s403","name":"Kopieer (unison)","pages":[{"from":61}]},{"id":"s404","name":"Ontwikkel idee","pages":[{"from":68}]},{"id":"s_morajfau_vrug","name":"De-Ontwikkel idee","pages":[{"from":69}]},{"id":"s405","name":"Ontwikkel pitch","pages":[{"from":204}]},{"id":"s406","name":"Ontwikkel ritme","pages":[{"from":205}]},{"id":"s407","name":"Loop","pages":[{"from":64}]}]},{"id":"c2","name":"Dynamiek & Ruimte","items":[{"id":"s201","name":"Volume","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/volume.png"}]},{"id":"s202","name":"Dynamic","pages":[{"from":53}]},{"id":"s203","name":"Panning","pages":[{"from":84}]},{"id":"s204","name":"Activity / Density","pages":[{"from":91}]},{"id":"s205","name":"Heterophony","pages":[{"from":62}]},{"id":"s_mor3p2fu_z0lf","name":"Sync / Onsync","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/sync onsync.png"}],"note":"Order / disorder"},{"id":"s_mor3qq36_08pg","name":"Plummer","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/plummer.png"}],"note":"Stutter effect"},{"id":"s_mor3y9cr_gg22","name":"Maak Percussief","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/kloppen.png"}],"note":"Muzikant speelt phrase zonder (toon/pitch).","translation":"2 vuisten tegen elkaar"},{"id":"s_mor40ldu_zyfw","name":"Soundscape","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/soundscape.png"}]}]},{"id":"c5","name":"Breaks","items":[{"id":"s501","name":"Break & continue","pages":[{"from":94}]},{"id":"s502","name":"Break Call & Response","pages":[{"from":96}],"hidden":false},{"id":"s503","name":"Break Ping pong","pages":[{"from":98}],"hidden":true}]},{"id":"c6","name":"Melodie & Harmonie","items":[{"id":"s601","name":"Melody","pages":[{"from":200}]},{"id":"s602","name":"Chords","pages":[{"from":209}]},{"id":"s603","name":"½ toon omhoog/omlaag","pages":[{"from":210}]},{"id":"s_moq9a6um_q71l","name":"Harmonizeren","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/harmonizeren.png"}],"note":"(Laagjes 1 3 5 7)"}]},{"id":"c7","name":"Tempo & Feel","items":[{"id":"s701","name":"Tempo Speed up / Slow down","pages":[{"from":71}]},{"id":"s702","name":"Beats per measure","pages":[{"from":76}]},{"id":"s703","name":"Subdivision","note":"alleen recht en triplet feel!","pages":[{"from":78,"to":79}],"hidden":true},{"id":"s_moran14q_rvw0","name":"Half Time","pages":[{"from":112}]},{"id":"s_moraon0n_ih4u","name":"Double Time","pages":[{"from":110}]}]},{"id":"s_mor3rykl_bhev","name":"Vocaal","items":[{"id":"s_mor3s1it_vdjt","name":"gebruik stem","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/gebruik stem.png"}]},{"id":"s_mor3spb2_xton","name":"Vertel Verhaal","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/verhaal.png"}],"note":"storytelling"},{"id":"s_mor3tdz9_eznp","name":"Fluisteren","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/fluister.png"}],"note":"Muzikanten gaan allemaal fluisteren"},{"id":"s_mor3u0w9_oipi","name":"Praten","pages":[{"url":"https://superb-bombolone-f68024.netlify.app/praten.png"}],"note":"Muzikanten gaan allemaal praten"}]}]}/*DATA_END*/;
+
+// ── Page number conversion (book page <-> PDF page) ──────────
+// Book pages are stored and displayed; PDF offset is subtracted when rendering.
+// To change the offset, edit PDF_OFFSET below (or PDF_OFFSET_MELODIC for p.199+).
+const PDF_OFFSET = 17;
+const PDF_OFFSET_MELODIC = 18; // book pages 199+
+// Password is stored as SHA-256 hash — never as plaintext.
+// Default password is 'ritmo'. Change it via the settings menu in the app.
+const DEFAULT_PW_HASH = 'eb47a6774fd0123a9323fd08c368e537518727458141fe75d32d012fbefcb1c4';
+
+async function hashPw(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+function storedHash() { return localStorage.getItem('signs-pw-hash') || DEFAULT_PW_HASH; }
+async function checkPw(pw) { return (await hashPw(pw)) === storedHash(); }
+
+function pdfToBook(pdfPage) {
+  if (!pdfPage) return null;
+  return pdfPage + (pdfPage >= (199 - PDF_OFFSET_MELODIC) ? PDF_OFFSET_MELODIC : PDF_OFFSET);
+}
+
+function bookToPdf(bookPage) {
+  if (!bookPage) return null;
+  const offset = bookPage >= 199 ? PDF_OFFSET_MELODIC : PDF_OFFSET;
+  return Math.max(1, bookPage - offset);
+}
+
+// ══════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════
+const Storage = {
+  ok: true,
+  init() {
+    try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); }
+    catch(e) { this.ok = false; }
+    if (!this.ok) $('storageWarning').style.display='';
+  },
+  save(data) {
+    if (!this.ok) return;
+    try { localStorage.setItem('senas-v2', JSON.stringify(data)); } catch(e) {}
+  },
+  load() {
+    if (!this.ok) return null;
+    try { const r=localStorage.getItem('senas-v2'); return r ? JSON.parse(r) : null; } catch(e) { return null; }
+  },
+  _db: null,
+  _openDB() {
+    if (this._db) return this._db;
+    this._db = new Promise((res,rej) => {
+      try {
+        const r = indexedDB.open('senas3', 1);
+        r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('f')) r.result.createObjectStore('f'); };
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      } catch(e) { rej(e); }
+    });
+    return this._db;
+  },
+  async savePDF(buf, name) {
+    try {
+      const db = await this._openDB();
+      return new Promise(res => {
+        const tx = db.transaction('f','readwrite'), s = tx.objectStore('f');
+        s.put(buf,'data'); s.put(name,'name');
+        tx.oncomplete = () => res(true); tx.onerror = () => res(false);
+      });
+    } catch(e) { return false; }
+  },
+  async loadPDF() {
+    try {
+      const db = await this._openDB();
+      return new Promise(res => {
+        const tx = db.transaction('f','readonly'), s = tx.objectStore('f');
+        const dr = s.get('data'), nr = s.get('name');
+        tx.oncomplete = () => dr.result ? res({buffer:dr.result, name:nr.result||'manual.pdf'}) : res(null);
+        tx.onerror = () => res(null);
+      });
+    } catch(e) { return null; }
+  }
+};
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+const state = {
+  data: null,
+  pdfDoc: null,
+  pdfFileName: '',
+  activeSignId: null,
+  activeRefIdx: 0,       // which page-ref is currently shown
+  currentPage: null,
+  zoom: 1.0,
+  editMode: false,
+  editingSignId: null,
+  searchFilter: '',
+};
+
+// ══════════════════════════════════════════════
+// UTIL
+// ══════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+const uid = () => 's_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
+
+function hi(s, f) {
+  if (!s) return '';
+  const e = esc(s);
+  if (!f) return e;
+  return e.replace(new RegExp('('+f.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<mark>$1</mark>');
+}
+
+function refLabel(ref) {
+  if (ref.url) return ref.label || 'afbeelding';
+  return ref.to ? `p. ${ref.from}-${ref.to}` : `p. ${ref.from}`;
+}
+
+function allPagesLabel(item) {
+  if (!item.pages || !item.pages.length) return null;
+  return item.pages.map(refLabel).join(', ');
+}
+
+function findSign(id) {
+  for (const cat of state.data.categories) {
+    const item = cat.items.find(it => it.id === id);
+    if (item) return { item, category: cat };
+  }
+  return null;
+}
+
+let _toastTimer;
+function toast(msg, type='') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.className='toast', 2400);
+}
+
+function persist() { Storage.save(state.data); }
+
+// ══════════════════════════════════════════════
+// RENDER INDEX
+// ══════════════════════════════════════════════
+function renderIndex() {
+  const f = state.searchFilter.trim().toLowerCase();
+  let html = '', n = 1, total = 0;
+
+  for (const cat of state.data.categories) {
+    if (!state.editMode && cat.hidden) { n++; continue; }
+    const filtered = cat.items.filter(it => {
+      if (!state.editMode && it.hidden) return false;
+      if (!f) return true;
+      return [it.name, it.translation, it.note, cat.name, allPagesLabel(it)||'']
+        .filter(Boolean).join(' ').toLowerCase().includes(f);
+    });
+    if (!filtered.length && f) { n++; continue; }
+    total += filtered.length;
+
+    html += `<section class="category ${cat.hidden ? 'hidden-cat' : ''}" data-cat-id="${esc(cat.id)}">`;
+    html += `<div class="category-header">
+      <span class="category-num">${String(n).padStart(2,'0')}</span>
+      <span class="category-name">${hi(cat.name, f)}</span>
+      <div class="category-actions">
+        <button class="mini-btn" data-act="cat-up" type="button" title="Omhoog"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 7l2.5-2.5L8 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn" data-act="cat-down" type="button" title="Omlaag"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 4l2.5 2.5L8 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn eye-btn ${cat.hidden ? 'hidden' : ''}" data-act="cat-toggle" type="button" title="${cat.hidden ? 'Toon' : 'Verberg'}">${cat.hidden ? `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 9M4.5 2.5A5 5 0 0 1 9.5 5.5M1.5 5.5A5 5 0 0 0 5.5 8.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>` : `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><ellipse cx="5.5" cy="5.5" rx="4" ry="2.5" stroke="currentColor" stroke-width="1.2"/><circle cx="5.5" cy="5.5" r="1.3" fill="currentColor"/></svg>`}</button>
+        <button class="mini-btn" data-act="cat-rename" type="button" title="Hernoem"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M8 1.5l1.5 1.5L4 8.5l-2 .5.5-2L8 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn danger" data-act="cat-delete" type="button" title="Verwijder categorie"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 3h7M4 3V2h3v1M3.5 3l.4 6h3.2l.4-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+      </div>
+    </div>`;
+
+    html += '<ul class="signs">';
+    for (const it of filtered) {
+      html += renderSignRow(it, cat.id, f);
+      if (state.editingSignId === it.id) html += renderEditForm(it, cat.id);
+    }
+    html += '</ul>';
+    html += `<div class="add-row"><button class="add-btn" data-act="add-sign" data-cat-id="${esc(cat.id)}" type="button">+ sign toevoegen</button></div>`;
+    html += '</section>';
+    n++;
+  }
+
+  if (!total && f) html = `<div class="no-results">Geen resultaten voor <strong>"${esc(state.searchFilter)}"</strong>.</div>`;
+  html += `<div class="add-category-row"><button class="add-btn" data-act="add-cat" type="button">+ Nieuwe categorie</button></div>`;
+  $('content').innerHTML = html;
+}
+
+function renderSignRow(it, catId, f) {
+  const cls = [state.activeSignId === it.id ? 'sign active' : 'sign', it.hidden ? 'hidden-sign' : ''].join(' ').trim();
+  const transl = it.translation ? `<span class="sign-translation">${hi(it.translation,f)}</span>` : '';
+  const note = it.note ? `<span class="sign-note">${hi(it.note,f)}</span>` : '';
+
+  let badgesHtml;
+  if (state.editMode) {
+    if (!it.pages || !it.pages.length) {
+      badgesHtml = `<div class="page-badges"><span class="page-badge no-page">geen p.</span></div>`;
+    } else {
+      const isActive = state.activeSignId === it.id;
+      badgesHtml = `<div class="page-badges">${it.pages.map((ref,i) => {
+        const ac = isActive && i === state.activeRefIdx ? 'active-ref' : '';
+        const lbl = ref.url ? '&#128247;' : esc(refLabel(ref));
+        return `<span class="page-badge ${ac}" data-ref-idx="${i}">${lbl}</span>`;
+      }).join('')}</div>`;
+    }
+  } else {
+    badgesHtml = '';
+  }
+
+  return `<li class="${cls}" data-sign-id="${esc(it.id)}" data-cat-id="${esc(catId)}">
+    <div class="sign-handle" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><circle cx="3" cy="3" r="1"/><circle cx="7" cy="3" r="1"/><circle cx="3" cy="7" r="1"/><circle cx="7" cy="7" r="1"/></svg></div>
+    <div class="sign-text">
+      <span class="sign-name">${hi(it.name,f)}</span>${transl}${note}
+    </div>
+    <div class="sign-right">
+      ${badgesHtml}
+      <div class="sign-actions">
+        <button class="mini-btn" data-act="sign-up" type="button" title="Omhoog"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 7l2.5-2.5L8 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn" data-act="sign-down" type="button" title="Omlaag"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 4l2.5 2.5L8 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn eye-btn ${it.hidden ? 'hidden' : ''}" data-act="sign-toggle" type="button" title="${it.hidden ? 'Toon' : 'Verberg'}">${it.hidden ? `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 9M4.5 2.5A5 5 0 0 1 9.5 5.5M1.5 5.5A5 5 0 0 0 5.5 8.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>` : `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><ellipse cx="5.5" cy="5.5" rx="4" ry="2.5" stroke="currentColor" stroke-width="1.2"/><circle cx="5.5" cy="5.5" r="1.3" fill="currentColor"/></svg>`}</button>
+        <button class="mini-btn" data-act="sign-edit" type="button" title="Bewerk"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M8 1.5l1.5 1.5L4 8.5l-2 .5.5-2L8 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn danger" data-act="sign-delete" type="button" title="Verwijder"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 3h7M4 3V2h3v1M3.5 3l.4 6h3.2l.4-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+      </div>
+    </div>
+  </li>`;
+}
+
+function renderEditForm(it, catId) {
+  const maxP = state.pdfDoc ? state.pdfDoc.numPages : 999;
+  const hasPdf = !!state.pdfDoc;
+  const dis = hasPdf ? '' : 'disabled title="Laad eerst de PDF"';
+  const pages = it.pages || [];
+
+  let refsHtml = '';
+  if (pages.length === 0) {
+    refsHtml = '<p class="pages-empty">Nog geen pagina\'s toegevoegd.</p>';
+  } else {
+    refsHtml = pages.map((ref, i) => {
+      const isImg = !!ref.url;
+      return `
+      <div class="page-ref-row" data-ref-idx="${i}" data-ref-type="${isImg ? 'image' : 'pdf'}">
+        <select class="ref-type-select" data-act="ref-type" style="flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px;color:var(--ink-soft);cursor:pointer;max-width:100px">
+          <option value="pdf" ${isImg ? '' : 'selected'}>PDF pagina</option>
+          <option value="image" ${isImg ? 'selected' : ''}>Afbeelding</option>
+        </select>
+        ${isImg ? `
+        <input type="text" class="url-input" value="${esc(ref.url)}" placeholder="https://..." style="flex:1;padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">
+        <input type="text" class="label-input" value="${esc(ref.label||'')}" placeholder="naam (opt.)" style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">
+        ` : `
+        <div class="pf">
+          <input type="number" class="from-input" value="${ref.from ?? ''}" min="1" max="${maxP}" placeholder="van">
+          <button class="pick-btn" data-act="pick-from" data-ref-idx="${i}" ${dis} type="button">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Kies
+          </button>
+        </div>
+        <span class="pf-sep">t/m (opt.)</span>
+        <div class="pf">
+          <input type="number" class="to-input" value="${ref.to ?? ''}" min="1" max="${maxP}" placeholder="—">
+          <button class="pick-btn" data-act="pick-to" data-ref-idx="${i}" ${dis} type="button">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Kies
+          </button>
+        </div>
+        `}
+        <button class="del-ref-btn" data-act="del-ref" data-ref-idx="${i}" type="button" title="Verwijder">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>`;
+    }).join('');
+  }
+
+  return `<li><form class="edit-form" data-sign-id="${esc(it.id)}" data-cat-id="${esc(catId)}" onsubmit="return false">
+    <div>
+      <label>Naam</label>
+      <input type="text" name="name" value="${esc(it.name||'')}" autofocus>
+    </div>
+    <div>
+      <label>Vertaling (optioneel)</label>
+      <input type="text" name="translation" value="${esc(it.translation||'')}" placeholder="bv. Develop Pitch">
+    </div>
+    <div>
+      <div class="pages-label">
+        <label style="margin:0">Pagina's in het handboek</label>
+        <button class="add-page-ref-btn" data-act="add-ref" type="button">+ Pagina toevoegen</button>
+      </div>
+      <div class="pages-list" style="margin-top:8px">${refsHtml}</div>
+      ${hasPdf ? '' : '<p class="help" style="margin-top:6px">Laad de PDF om pagina\'s visueel te kunnen kiezen.</p>'}
+    </div>
+    <div>
+      <label>Notitie (optioneel)</label>
+      <textarea name="note" rows="1" placeholder="bv. twee platte handen voor je middel">${esc(it.note||'')}</textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" data-act="edit-cancel" type="button">Annuleer</button>
+      <button class="btn btn-primary" data-act="edit-save" type="submit">Opslaan</button>
+    </div>
+  </form></li>`;
+}
+
+// ══════════════════════════════════════════════
+// EDIT ACTIONS
+// ══════════════════════════════════════════════
+function moveItem(arr, idx, dir) {
+  const ni = idx + dir;
+  if (ni < 0 || ni >= arr.length) return false;
+  const [x] = arr.splice(idx, 1); arr.splice(ni, 0, x); return true;
+}
+
+function handleSignAction(act, signId, catId) {
+  const cat = state.data.categories.find(c => c.id === catId);
+  if (!cat) return;
+  const idx = cat.items.findIndex(it => it.id === signId);
+  if (idx < 0) return;
+  switch (act) {
+    case 'sign-up':   if (moveItem(cat.items, idx, -1)) { persist(); renderIndex(); } break;
+    case 'sign-down': if (moveItem(cat.items, idx, 1))  { persist(); renderIndex(); } break;
+    case 'sign-edit':
+      state.editingSignId = state.editingSignId === signId ? null : signId;
+      renderIndex();
+      break;
+    case 'sign-toggle':
+      cat.items[idx].hidden = !cat.items[idx].hidden;
+      persist(); renderIndex();
+      toast(cat.items[idx].hidden ? 'Verborgen' : 'Zichtbaar');
+      break;
+    case 'sign-delete':
+      if (confirm(`"${cat.items[idx].name}" verwijderen?`)) {
+        cat.items.splice(idx, 1);
+        if (state.activeSignId === signId) state.activeSignId = null;
+        if (state.editingSignId === signId) state.editingSignId = null;
+        persist(); renderIndex(); updateViewerStrip(); toast('Verwijderd','success');
+      }
+      break;
+  }
+}
+
+function handleCatAction(act, catId) {
+  const idx = state.data.categories.findIndex(c => c.id === catId);
+  if (idx < 0) return;
+  const cat = state.data.categories[idx];
+  switch (act) {
+    case 'cat-up':   if (moveItem(state.data.categories, idx, -1)) { persist(); renderIndex(); } break;
+    case 'cat-down': if (moveItem(state.data.categories, idx, 1))  { persist(); renderIndex(); } break;
+    case 'cat-rename': {
+      const n = prompt('Nieuwe naam:', cat.name);
+      if (n && n.trim() && n !== cat.name) { cat.name = n.trim(); persist(); renderIndex(); }
+      break;
+    }
+    case 'cat-toggle':
+      cat.hidden = !cat.hidden;
+      persist(); renderIndex();
+      toast(cat.hidden ? 'Categorie verborgen' : 'Categorie zichtbaar');
+      break;
+    case 'cat-delete':
+      if (confirm(`Categorie "${cat.name}" verwijderen met alle signs?`)) {
+        if (cat.items.some(it => it.id === state.activeSignId)) state.activeSignId = null;
+        if (cat.items.some(it => it.id === state.editingSignId)) state.editingSignId = null;
+        state.data.categories.splice(idx, 1);
+        persist(); renderIndex(); toast('Categorie verwijderd','success');
+      }
+      break;
+  }
+}
+
+function readPagesFromForm(form) {
+  return [...form.querySelectorAll('.page-ref-row')].map(row => {
+    const type = row.dataset.refType;
+    if (type === 'image') {
+      const url = row.querySelector('.url-input')?.value.trim();
+      if (!url) return null;
+      const label = row.querySelector('.label-input')?.value.trim();
+      return label ? { url, label } : { url };
+    } else {
+      const fromVal = parseInt(row.querySelector('.from-input')?.value);
+      const toVal = parseInt(row.querySelector('.to-input')?.value);
+      if (!fromVal || isNaN(fromVal)) return null;
+      const ref = { from: fromVal };
+      if (toVal && !isNaN(toVal) && toVal > fromVal) ref.to = toVal;
+      return ref;
+    }
+  }).filter(Boolean);
+}
+
+function saveEditForm(form) {
+  const signId = form.dataset.signId, catId = form.dataset.catId;
+  const cat = state.data.categories.find(c => c.id === catId);
+  if (!cat) return;
+  const item = cat.items.find(it => it.id === signId);
+  if (!item) return;
+
+  const name = form.querySelector('[name="name"]').value.trim();
+  if (!name) { toast('Naam is verplicht','error'); return; }
+
+  item.name = name;
+  const tr = form.querySelector('[name="translation"]').value.trim();
+  const nt = form.querySelector('[name="note"]').value.trim();
+  if (tr) item.translation = tr; else delete item.translation;
+  if (nt) item.note = nt; else delete item.note;
+  item.pages = readPagesFromForm(form);
+
+  state.editingSignId = null;
+  persist(); renderIndex();
+  toast('Opgeslagen','success');
+  if (state.activeSignId === signId) {
+    const found = findSign(signId);
+    if (found) showSign(found.item, found.category, state.activeRefIdx);
+  }
+}
+
+function addNewSign(catId) {
+  const cat = state.data.categories.find(c => c.id === catId);
+  if (!cat) return;
+  const newItem = { id: uid(), name: 'Nieuw sign', pages: [] };
+  cat.items.push(newItem);
+  state.editingSignId = newItem.id;
+  persist(); renderIndex();
+  setTimeout(() => {
+    const el = document.querySelector(`[data-sign-id="${newItem.id}"]`);
+    if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+  }, 50);
+}
+
+function addNewCategory() {
+  const n = prompt('Naam voor de nieuwe categorie:','');
+  if (!n || !n.trim()) return;
+  state.data.categories.push({ id:uid(), name:n.trim(), items:[] });
+  persist(); renderIndex(); toast('Categorie toegevoegd','success');
+}
+
+// ══════════════════════════════════════════════
+// VIEWER
+// ══════════════════════════════════════════════
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const PDF_URL = 'https://superb-bombolone-f68024.netlify.app/manual.pdf';
+
+async function loadPDFFromBuffer(buf, name) {
+  try {
+    state.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+    state.pdfFileName = name;
+    $('pdfFileName').textContent = name;
+    $('pdfBanner').style.display = '';
+    return true;
+  } catch(e) { console.error(e); toast('Kon PDF niet laden','error'); return false; }
+}
+
+async function loadPDFFromURL(url, name) {
+  // pdf.js fetches only what it needs via HTTP range requests — no full download
+  try {
+    const loadingTask = pdfjsLib.getDocument({
+      url,
+      rangeChunkSize: 65536,
+      disableAutoFetch: false,
+      disableStream: false,
+      withCredentials: false,
+    });
+    state.pdfDoc = await loadingTask.promise;
+    state.pdfFileName = name;
+    $('pdfFileName').textContent = name;
+    $('pdfBanner').style.display = '';
+    return true;
+  } catch(e) {
+    console.error('URL streaming failed:', e);
+    return false;
+  }
+}
+
+async function handlePDFFile(file) {
+  if (!file) return;
+  showPDFLoading(0);
+  try {
+    const buf = await file.arrayBuffer();
+    const ok = await loadPDFFromBuffer(buf.slice(0), file.name);
+    if (ok) {
+      await Storage.savePDF(buf.slice(0), file.name);
+      if (state.activeSignId) {
+        const found = findSign(state.activeSignId);
+        if (found) { showSign(found.item, found.category, state.activeRefIdx); return; }
+      }
+      showWelcome();
+    }
+  } catch(e) { toast('Kon PDF niet laden','error'); showInitialEmpty(); }
+}
+
+function showPDFLoading(pct) {
+  // If a sign is selected, show loading overlay in viewer without replacing sign context
+  const signTitle = $('viewerTitle').textContent;
+  const signMeta  = $('viewerMeta').textContent;
+  const displayPct = Math.max(8, pct); // always start at 8% so it looks alive
+  $('viewerFrame').innerHTML = `
+    <div class="empty-state">
+      <svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <h2 style="margin-bottom:4px">Even geduld</h2>
+      <p style="margin-bottom:0">Alle gebaren worden geladen.</p>
+      <div style="width:240px;background:var(--line-soft);border-radius:99px;height:7px;margin-top:20px;overflow:hidden">
+        <div id="pdfProgressBar" style="height:100%;background:var(--accent);border-radius:99px;width:${displayPct}%;transition:width .4s ease"></div>
+      </div>
+      <p style="margin-top:8px;font-size:12px;color:var(--ink-faint)" id="pdfProgressPct">${displayPct}%</p>
+    </div>`;
+  // Animate from 8% to ~15% in the first second to show life
+  if (pct === 0) {
+    setTimeout(() => {
+      const bar = document.getElementById('pdfProgressBar');
+      const lbl = document.getElementById('pdfProgressPct');
+      if (bar && bar.style.width === '8%') {
+        bar.style.width = '15%';
+        if (lbl) lbl.textContent = '15%';
+      }
+    }, 800);
+  }
+}
+
+async function fetchWithProgress(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const total = parseInt(resp.headers.get('Content-Length') || '0');
+  const reader = resp.body.getReader();
+  const chunks = [];
+  let received = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    if (total) {
+      const pct = Math.round(received / total * 100);
+      const bar = document.getElementById('pdfProgressBar');
+      const lbl = document.getElementById('pdfProgressPct');
+      if (bar) bar.style.width = pct + '%';
+      if (lbl) lbl.textContent = pct + '%';
+    }
+  }
+  const buf = new Uint8Array(received);
+  let pos = 0;
+  for (const chunk of chunks) { buf.set(chunk, pos); pos += chunk.length; }
+  return buf.buffer;
+}
+
+async function tryLoadServer() {
+  try {
+    showPDFLoading(0);
+    // Try streaming first (fast — only fetches needed pages)
+    const streamOk = await loadPDFFromURL(PDF_URL, 'manual.pdf');
+    if (streamOk) return true;
+    // Fallback: full download with progress bar
+    const buf = await fetchWithProgress(PDF_URL);
+    const ok = await loadPDFFromBuffer(buf.slice(0), 'manual.pdf');
+    if (ok) await Storage.savePDF(buf.slice(0), 'manual.pdf');
+    return ok;
+  } catch(e) {
+    console.error('Server load failed:', e);
+    return false;
+  }
+}
+
+async function tryAutoLoad() {
+  // Try cache first — instant if available
+  const cached = await Storage.loadPDF();
+  if (cached) {
+    const ok = await loadPDFFromBuffer(cached.buffer, cached.name);
+    if (ok) { showWelcome(); return; }
+  }
+  // Stream from server (or full download as fallback)
+  const ok = await tryLoadServer();
+  if (ok) { showWelcome(); return; }
+  showInitialEmpty();
+}
+
+function showWelcome() {
+  $('viewerTitle').textContent = 'Signs index';
+  $('viewerMeta').textContent = state.pdfDoc ? `${state.pdfFileName} · ${state.pdfDoc.numPages} pagina\'s` : '';
+  $('viewerControls').style.display = 'none';
+  $('pageRefStrip').style.display = 'none';
+  $('viewerFrame').innerHTML = '';
+}
+
+function showInitialEmpty() {
+  $('viewerFrame').innerHTML = `
+    <div class="empty-state">
+      <svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <h2>Klaar om mee te spelen</h2>
+      <p>Klik links op een sign om de pagina te zien.</p>
+      <p>Laad eenmalig het handboek; daarna onthoudt de app het.</p>
+      <div class="actions">
+        <label class="file-picker">
+          <input type="file" accept="application/pdf" class="pdf-input-inline">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Laad PDF
+        </label>
+      </div>
+    </div>`;
+  wirePdfInputs();
+}
+
+function wirePdfInputs() {
+  document.querySelectorAll('.pdf-input-inline').forEach(el =>
+    el.addEventListener('change', e => handlePDFFile(e.target.files[0])));
+}
+
+function showSign(item, cat, refIdx = 0) {
+  state.zoom = 1.0; // reset zoom on new sign
+  document.body.classList.add('viewer-open');
+  state.activeSignId = item.id;
+  const pages = item.pages || [];
+  state.activeRefIdx = Math.min(refIdx, Math.max(0, pages.length - 1));
+
+  const title = item.translation ? `${item.name}  ·  ${item.translation}` : item.name;
+  $('viewerTitle').textContent = title;
+
+  const metaParts = [cat.name];
+  const pl = allPagesLabel(item);
+  if (pl) metaParts.push(pl);
+  if (item.note) metaParts.push(item.note);
+  $('viewerMeta').textContent = metaParts.join(' · ');
+
+  // page-ref strip
+  updateViewerStrip(item);
+
+  if (!pages.length) {
+    $('viewerControls').style.display = 'none';
+    showSignInfo(item);
+    return;
+  }
+
+  const ref = pages[state.activeRefIdx];
+  // Image ref
+  if (ref.url) {
+    $('viewerControls').style.display = 'none';
+    showImageRef(ref);
+    return;
+  }
+  // PDF ref
+  if (!state.pdfDoc) {
+    $('viewerControls').style.display = 'none';
+    showSignInfo(item);
+    return;
+  }
+  if (bookToPdf(ref.from) > state.pdfDoc.numPages) {
+    $('viewerControls').style.display = 'none';
+    showSignInfo(item);
+    return;
+  }
+  $('viewerControls').style.display = '';
+  const pdfFrom = bookToPdf(ref.from);
+  const pdfTo   = ref.to ? bookToPdf(ref.to) : pdfFrom;
+  renderPDFRange(pdfFrom, pdfTo);
+}
+
+function updateViewerStrip(item) {
+  item = item || (state.activeSignId ? findSign(state.activeSignId)?.item : null);
+  const strip = $('pageRefStrip');
+  if (!item || !item.pages || item.pages.length <= 1) { strip.style.display = 'none'; return; }
+
+  strip.style.display = '';
+  strip.innerHTML = `<span class="page-ref-strip-label">Pagina's:</span>` +
+    item.pages.map((ref, i) =>
+      `<button class="strip-btn ${i === state.activeRefIdx ? 'active' : ''}" data-ref-idx="${i}" type="button">${esc(refLabel(ref))}</button>`
+    ).join('');
+}
+
+function showImageRef(ref) {
+  const frame = $('viewerFrame');
+  frame.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = ref.url;
+  img.alt = ref.label || 'sign';
+  img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 8px 24px -8px rgba(29,35,51,.18);background:white;border-radius:2px;';
+  img.onerror = () => { frame.innerHTML = `<div class="empty-state"><h2>Afbeelding niet gevonden</h2><p style="font-size:13px;color:var(--ink-faint)">${esc(ref.url)}</p></div>`; };
+  frame.appendChild(img);
+}
+
+function showSignInfo(item) {
+  const pages = item.pages || [];
+  let html = `<div class="empty-state">`;
+  if (!pages.length) {
+    html += `<svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><circle cx="48" cy="48" r="38" stroke="currentColor" stroke-width="1.6"/><path d="M30 60c2-6 9-10 18-10s16 4 18 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+    html += `<h2>${esc(item.name)}</h2>`;
+    if (item.translation) html += `<p>${esc(item.translation)}</p>`;
+    if (item.note) html += `<p style="font-style:italic">${esc(item.note)}</p>`;
+    html += `<p style="margin-top:14px;color:var(--ink-faint);font-size:13px">Geen paginareferenties voor dit sign.</p>`;
+  } else if (!state.pdfDoc) {
+    if (document.getElementById('pdfProgressBar')) {
+      showPDFLoading(parseInt(document.getElementById('pdfProgressPct')?.textContent || '8'));
+      return;
+    }
+    html += `<svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+    html += `<h2>${esc(item.name)}</h2>`;
+    if (item.translation) html += `<p>${esc(item.translation)}</p>`;
+    html += `<div class="pagenum">${esc(allPagesLabel(item))}</div>`;
+    html += `<p>Laad het handboek (PDF) om de pagina's te bekijken.</p>`;
+    html += `<div class="actions"><label class="file-picker"><input type="file" accept="application/pdf" class="pdf-input-inline"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Laad PDF</label></div>`;
+  } else {
+    html += `<h2>${esc(item.name)}</h2><div class="pagenum">${esc(allPagesLabel(item))}</div><p style="color:var(--warm)">Pagina valt buiten het handboek (${state.pdfDoc.numPages} p.).</p>`;
+  }
+  html += `</div>`;
+  $('viewerFrame').innerHTML = html;
+  wirePdfInputs();
+}
+
+async function renderPDFPage(pageNum) {
+  await renderPDFRange(pageNum, pageNum);
+}
+
+async function renderPDFRange(fromPage, toPage) {
+  if (!state.pdfDoc) return;
+  fromPage = Math.max(1, Math.min(fromPage, state.pdfDoc.numPages));
+  toPage   = Math.max(fromPage, Math.min(toPage || fromPage, state.pdfDoc.numPages));
+  state.currentPage = fromPage;
+
+  const frame = $('viewerFrame');
+  frame.innerHTML = '';
+
+  const numPages = toPage - fromPage + 1;
+  const pad = 24;
+  // Use getBoundingClientRect for accurate visible dimensions after clearing content
+  const rect = frame.getBoundingClientRect();
+  const frameW = rect.width  - pad;
+  const frameH = rect.height - pad;
+
+  // Fetch all pages first to compute combined dimensions
+  const pages = [];
+  for (let p = fromPage; p <= toPage; p++) {
+    pages.push(await state.pdfDoc.getPage(p));
+  }
+
+  // Single page: fit to both width and height
+  // Multiple pages: fit to width only, scroll vertically
+  const baseVp0 = pages[0].getViewport({ scale: 1 });
+  let fitScale;
+  if (numPages === 1) {
+    const scaleByW = frameW / baseVp0.width;
+    const scaleByH = frameH / baseVp0.height;
+    fitScale = Math.min(scaleByW, scaleByH) * state.zoom;
+  } else {
+    // Fit all pages (combined height) in the visible area
+    const gap = 12;
+    const totalH = pages.reduce((s, pg) => s + pg.getViewport({scale:1}).height, 0) + gap * (numPages - 1);
+    const scaleByW = frameW / baseVp0.width;
+    const scaleByH = frameH / totalH;
+    fitScale = Math.min(scaleByW, scaleByH) * state.zoom * 1.44;
+  }
+
+  for (const page of pages) {
+    const vp = page.getViewport({ scale: fitScale });
+    const dpr = window.devicePixelRatio || 1;
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'pdf-canvas';
+    canvas.width  = Math.floor(vp.width  * dpr);
+    canvas.height = Math.floor(vp.height * dpr);
+    canvas.style.width  = Math.floor(vp.width)  + 'px';
+    canvas.style.height = Math.floor(vp.height) + 'px';
+    frame.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  }
+
+  if (numPages > 1) frame.scrollTop = 0;
+  $('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
+}
+
+// ══════════════════════════════════════════════
+// PAGE PICKER
+// ══════════════════════════════════════════════
+const picker = {
+  page: 1, zoom: 1, form: null, actField: null, refIdx: null,
+
+  open(startPage, form, actField, refIdx) {
+    if (!state.pdfDoc) return;
+    this.page = startPage ? bookToPdf(startPage) : 1; this.form = form;
+    this.actField = actField; this.refIdx = refIdx;
+    this.zoom = 1;
+
+    const div = document.createElement('div');
+    div.className = 'picker-overlay'; div.id = 'pickerOverlay';
+    div.innerHTML = `
+      <div class="picker-box">
+        <div class="picker-header">
+          <div><h3>Kies een pagina</h3><p>Blader door het handboek en klik op "Gebruik deze pagina".</p></div>
+          <button class="picker-close" id="pClose" type="button"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+        </div>
+        <div class="picker-nav">
+          <button class="ctrl-btn" id="pPrev" type="button"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 11L4.5 7l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="ctrl-btn" id="pNext" type="button"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5.5 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="picker-page-input">
+            <span>Pagina</span>
+            <input type="number" id="pNum" min="1" max="${state.pdfDoc.numPages}" value="${this.page}">
+            <span>van ${state.pdfDoc.numPages}</span>
+          </div>
+          <button class="ctrl-btn" id="pZOut" type="button"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+          <button class="ctrl-btn" id="pZIn" type="button"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+          <div class="picker-select-btns">
+            <button class="btn btn-primary" id="pConfirm" type="button">Gebruik boekpagina <span id="pLabel">${pdfToBook(this.page)}</span></button>
+          </div>
+        </div>
+        <div class="picker-body" id="pBody"><div class="empty-state"><div class="spinner"></div></div></div>
+        <div class="picker-footer">
+          <div class="picker-info" id="pInfo">Geselecteerde pagina: <strong>${this.page}</strong></div>
+          <button class="btn btn-ghost" id="pCancel" type="button">Annuleer</button>
+        </div>
+      </div>`;
+    document.body.appendChild(div);
+
+    div.querySelector('#pClose').onclick = () => this.close();
+    div.querySelector('#pCancel').onclick = () => this.close();
+    div.querySelector('#pConfirm').onclick = () => this.confirm();
+    div.querySelector('#pPrev').onclick = () => this.go(this.page - 1);
+    div.querySelector('#pNext').onclick = () => this.go(this.page + 1);
+    div.querySelector('#pZIn').onclick = () => { this.zoom = Math.min(2, this.zoom + .2); this.draw(); };
+    div.querySelector('#pZOut').onclick = () => { this.zoom = Math.max(.4, this.zoom - .2); this.draw(); };
+    div.querySelector('#pNum').addEventListener('change', e => {
+      const v = parseInt(e.target.value);
+      if (v >= 1 && v <= state.pdfDoc.numPages) this.go(v);
+    });
+    div.querySelector('#pBody').onclick = () => this.confirm();
+    div.onclick = e => { if (e.target === div) this.close(); };
+
+    this._key = e => {
+      if (e.key==='Escape') this.close();
+      if (e.key==='ArrowLeft') this.go(this.page-1);
+      if (e.key==='ArrowRight') this.go(this.page+1);
+      if (e.key==='Enter') this.confirm();
+    };
+    document.addEventListener('keydown', this._key);
+    this.draw();
+  },
+
+  async draw() {
+    const body = document.getElementById('pBody'); if (!body) return;
+    let canvas = body.querySelector('.picker-canvas');
+    if (!canvas) {
+      body.innerHTML = '';
+      canvas = document.createElement('canvas');
+      canvas.className = 'picker-canvas'; canvas.title = 'Klik om te gebruiken';
+      body.appendChild(canvas);
+    }
+    canvas.style.opacity = '.4';
+    const page = await state.pdfDoc.getPage(this.page);
+    const bvp = page.getViewport({ scale:1 });
+    const fit = Math.min(1.8, (body.clientWidth - 40) / bvp.width);
+    const vp = page.getViewport({ scale: fit * this.zoom });
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(vp.width * dpr);
+    canvas.height = Math.floor(vp.height * dpr);
+    canvas.style.width = Math.floor(vp.width) + 'px';
+    canvas.style.height = Math.floor(vp.height) + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    await page.render({ canvasContext:ctx, viewport:vp }).promise;
+    canvas.style.opacity = '1';
+    const n = document.getElementById('pNum'), l = document.getElementById('pLabel');
+    const inf = document.getElementById('pInfo');
+    const pv = document.getElementById('pPrev'), nx = document.getElementById('pNext');
+    if (n) n.value = this.page;
+    if (l) l.textContent = pdfToBook(this.page);
+    if (inf) inf.innerHTML = `Boekpagina: <strong>${pdfToBook(this.page)}</strong> (PDF p. ${this.page})`;
+    if (pv) pv.disabled = this.page <= 1;
+    if (nx) nx.disabled = this.page >= state.pdfDoc.numPages;
+  },
+
+  go(p) {
+    this.page = Math.max(1, Math.min(p, state.pdfDoc ? state.pdfDoc.numPages : 1));
+    this.draw();
+  },
+
+  confirm() {
+    if (!this.form) { this.close(); return; }
+    // find the right row and field
+    const row = this.form.querySelector(`.page-ref-row[data-ref-idx="${this.refIdx}"]`);
+    if (row) {
+      const input = row.querySelector(this.actField === 'from' ? '.from-input' : '.to-input');
+      if (input) input.value = pdfToBook(this.page);
+    }
+    toast(`Boekpagina ${pdfToBook(this.page)} gekozen`, 'success');
+    this.close();
+  },
+
+  close() {
+    const el = document.getElementById('pickerOverlay');
+    if (el) el.remove();
+    if (this._key) { document.removeEventListener('keydown', this._key); this._key = null; }
+    this.form = null;
+  }
+};
+
+// ══════════════════════════════════════════════
+// EVENT WIRING
+// ══════════════════════════════════════════════
+$('content').addEventListener('click', e => {
+  // inside edit form
+  const form = e.target.closest('.edit-form');
+  if (form) {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const act = btn.dataset.act;
+
+    if (act === 'edit-cancel') {
+      const signId = form.dataset.signId;
+      const found = findSign(signId);
+      if (found && found.item.name === 'Nieuw sign' && !found.item.pages.length && !found.item.translation && !found.item.note) {
+        found.category.items = found.category.items.filter(it => it.id !== signId);
+        persist();
+      }
+      state.editingSignId = null; renderIndex(); return;
+    }
+    if (act === 'edit-save') { saveEditForm(form); return; }
+
+    if (act === 'add-ref') {
+      // Add new page-ref row to form dynamically
+      const list = form.querySelector('.pages-list');
+      const existingRows = list.querySelectorAll('.page-ref-row');
+      const idx = existingRows.length;
+      const maxP = state.pdfDoc ? state.pdfDoc.numPages : 999;
+      const hasPdf = !!state.pdfDoc;
+      const dis = hasPdf ? '' : 'disabled';
+      const empty = list.querySelector('.pages-empty');
+      if (empty) empty.remove();
+      const row = document.createElement('div');
+      row.className = 'page-ref-row'; row.dataset.refIdx = idx; row.dataset.refType = 'pdf';
+      row.innerHTML = `
+        <select class="ref-type-select" style="flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px;color:var(--ink-soft);cursor:pointer;max-width:100px">
+          <option value="pdf" selected>PDF pagina</option>
+          <option value="image">Afbeelding</option>
+        </select>
+        <div class="pf">
+          <input type="number" class="from-input" min="1" max="${maxP}" placeholder="van">
+          <button class="pick-btn" data-act="pick-from" data-ref-idx="${idx}" ${dis} type="button">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Kies
+          </button>
+        </div>
+        <span class="pf-sep">t/m (opt.)</span>
+        <div class="pf">
+          <input type="number" class="to-input" min="1" max="${maxP}" placeholder="—">
+          <button class="pick-btn" data-act="pick-to" data-ref-idx="${idx}" ${dis} type="button">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Kies
+          </button>
+        </div>
+        <button class="del-ref-btn" data-act="del-ref" data-ref-idx="${idx}" type="button" title="Verwijder">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>`;
+      list.appendChild(row);
+      row.querySelector('.from-input').focus();
+      return;
+    }
+
+    if (act === 'del-ref') {
+      const row = btn.closest('.page-ref-row');
+      if (row) {
+        row.remove();
+        // re-index remaining rows
+        form.querySelectorAll('.page-ref-row').forEach((r, i) => {
+          r.dataset.refIdx = i;
+          r.querySelectorAll('[data-ref-idx]').forEach(el => el.dataset.refIdx = i);
+        });
+      }
+      return;
+    }
+
+    if (act === 'pick-from' || act === 'pick-to') {
+      const refIdx = parseInt(btn.dataset.refIdx);
+      const row = form.querySelector(`.page-ref-row[data-ref-idx="${refIdx}"]`);
+      const field = act === 'pick-from' ? 'from' : 'to';
+      const curVal = parseInt(row?.querySelector(field==='from'?'.from-input':'.to-input')?.value) || null;
+      // start picker at current value or at from value (for 'to')
+      let startP = curVal;
+      if (!startP && field==='to') startP = parseInt(row?.querySelector('.from-input')?.value) || 1;
+      picker.open(startP || 1, form, field, refIdx);
+      return;
+    }
+    return;
+  }
+
+  // category actions
+  const catBtn = e.target.closest('[data-act^="cat-"]');
+  if (catBtn) {
+    const catEl = catBtn.closest('[data-cat-id]');
+    if (catEl) { e.stopPropagation(); handleCatAction(catBtn.dataset.act, catEl.dataset.catId); return; }
+  }
+
+  // global add buttons
+  const addBtn = e.target.closest('[data-act]');
+  if (addBtn) {
+    if (addBtn.dataset.act === 'add-sign') { addNewSign(addBtn.dataset.catId); return; }
+    if (addBtn.dataset.act === 'add-cat')  { addNewCategory(); return; }
+  }
+
+  // sign action buttons
+  const signBtn = e.target.closest('[data-act^="sign-"]');
+  if (signBtn) {
+    const li = signBtn.closest('[data-sign-id]');
+    if (li) { e.stopPropagation(); handleSignAction(signBtn.dataset.act, li.dataset.signId, li.dataset.catId); return; }
+  }
+
+  // page badge click → jump to that ref
+  const badge = e.target.closest('.page-badge[data-ref-idx]');
+  if (badge) {
+    const li = badge.closest('[data-sign-id]');
+    if (li) {
+      const found = findSign(li.dataset.signId);
+      if (found) { showSign(found.item, found.category, parseInt(badge.dataset.refIdx)); renderIndex(); }
+      return;
+    }
+  }
+
+  // sign row click → show in viewer
+  const signLi = e.target.closest('.sign');
+  if (signLi) {
+    const found = findSign(signLi.dataset.signId);
+    if (found) {
+      showSign(found.item, found.category, 0);
+      renderIndex();
+    }
+  }
+});
+
+$('content').addEventListener('submit', e => {
+  if (e.target.classList.contains('edit-form')) { e.preventDefault(); saveEditForm(e.target); }
+});
+$('content').addEventListener('change', e => {
+  const sel = e.target.closest('.ref-type-select');
+  if (!sel) return;
+  const row = sel.closest('.page-ref-row');
+  if (!row) return;
+  const newType = sel.value;
+  const idx = row.dataset.refIdx;
+  const maxP = state.pdfDoc ? state.pdfDoc.numPages : 999;
+  const hasPdf = !!state.pdfDoc;
+  const dis = hasPdf ? '' : 'disabled';
+
+  const typeSelect = `<select class="ref-type-select" style="flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px;color:var(--ink-soft);cursor:pointer;max-width:100px">
+    <option value="pdf" ${newType==='pdf'?'selected':''}>PDF pagina</option>
+    <option value="image" ${newType==='image'?'selected':''}>Afbeelding</option>
+  </select>`;
+
+  const delBtn = `<button class="del-ref-btn" data-act="del-ref" data-ref-idx="${idx}" type="button" title="Verwijder">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </button>`;
+
+  let fields = '';
+  if (newType === 'image') {
+    fields = `<input type="text" class="url-input" placeholder="https://..." style="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">
+    <input type="text" class="label-input" placeholder="naam (opt.)" style="width:80px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">`;
+  } else {
+    fields = `<div class="pf">
+      <input type="number" class="from-input" min="1" max="${maxP}" placeholder="van">
+      <button class="pick-btn" data-act="pick-from" data-ref-idx="${idx}" ${dis} type="button">
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Kies
+      </button>
+    </div>
+    <span class="pf-sep">t/m (opt.)</span>
+    <div class="pf">
+      <input type="number" class="to-input" min="1" max="${maxP}" placeholder="\u2014">
+      <button class="pick-btn" data-act="pick-to" data-ref-idx="${idx}" ${dis} type="button">
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Kies
+      </button>
+    </div>`;
+  }
+
+  row.dataset.refType = newType;
+  row.innerHTML = typeSelect + fields + delBtn;
+  row.querySelector('.ref-type-select').value = newType;
+  if (newType === 'image') row.querySelector('.url-input')?.focus();
+  else row.querySelector('.from-input')?.focus();
+});
+
+
+
+// page-ref strip click
+$('pageRefStrip').addEventListener('click', e => {
+  const btn = e.target.closest('.strip-btn[data-ref-idx]');
+  if (!btn) return;
+  const refIdx = parseInt(btn.dataset.refIdx);
+  const found = state.activeSignId ? findSign(state.activeSignId) : null;
+  if (!found) return;
+  state.activeRefIdx = refIdx;
+  const ref = found.item.pages[refIdx];
+  if (ref && state.pdfDoc && bookToPdf(ref.from) <= state.pdfDoc.numPages) {
+    const pdfFrom = bookToPdf(ref.from);
+    const pdfTo   = ref.to ? bookToPdf(ref.to) : pdfFrom;
+    renderPDFRange(pdfFrom, pdfTo);
+    updateViewerStrip(found.item);
+    renderIndex();
+  }
+});
+
+// edit toggle
+function setEditMode(on) {
+  state.editMode = on;
+  document.body.classList.toggle('edit-mode', on);
+  $('settingsBtn').style.display = on ? '' : 'none';
+  if (!on) state.editingSignId = null;
+  renderIndex();
+}
+
+$('editToggle').addEventListener('click', () => {
+  if (state.editMode) {
+    setEditMode(false);
+    toast('Bewerk-modus uit');
+  } else {
+    showPasswordModal();
+  }
+});
+
+function showPasswordModal() {
+  const overlay = document.createElement('div');
+  overlay.id = 'pwOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(29,35,51,.55);z-index:300;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);animation:fadeIn .15s ease';
+  overlay.innerHTML = `
+    <div style="background:var(--paper);border-radius:12px;box-shadow:0 24px 64px -16px rgba(29,35,51,.36);width:min(380px,90%);padding:32px;display:flex;flex-direction:column;gap:18px;animation:slideUp .18s ease">
+      <div>
+        <div style="font-family:Fraunces,serif;font-size:22px;font-weight:500;color:var(--ink);margin-bottom:6px">Beveiligd</div>
+        <div style="font-size:13.5px;color:var(--ink-soft);line-height:1.45">Voer het wachtwoord in om de bewerk-modus te openen.</div>
+      </div>
+      <input id="pwInput" type="password" placeholder="Wachtwoord"
+        style="padding:10px 14px;border:1px solid var(--line);border-radius:6px;font-size:15px;background:#fff;color:var(--ink);outline:none;transition:border-color .12s">
+      <div id="pwError" style="color:var(--warm);font-size:13px;display:none">Onjuist wachtwoord.</div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button id="pwCancel" type="button" style="padding:8px 16px;border:1px solid var(--line);background:transparent;border-radius:6px;cursor:pointer;font:inherit;font-size:13.5px;color:var(--ink)">Annuleer</button>
+        <button id="pwConfirm" type="button" style="padding:8px 16px;background:var(--accent);color:white;border:none;border-radius:6px;cursor:pointer;font:inherit;font-size:13.5px;font-weight:500">Bevestig</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const inp = overlay.querySelector('#pwInput');
+  const err = overlay.querySelector('#pwError');
+  setTimeout(() => inp.focus(), 50);
+  async function tryPassword() {
+    const ok = await checkPw(inp.value);
+    if (ok) {
+      overlay.remove();
+      setEditMode(true);
+      toast('Bewerk-modus aan');
+    } else {
+      err.style.display = 'block';
+      inp.value = '';
+      inp.focus();
+    }
+  }
+  overlay.querySelector('#pwConfirm').onclick = tryPassword;
+  overlay.querySelector('#pwCancel').onclick = () => overlay.remove();
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') tryPassword(); if (e.key === 'Escape') overlay.remove(); });
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+}
+
+// search
+$('search').addEventListener('input', e => { state.searchFilter = e.target.value; renderIndex(); });
+$('search').addEventListener('keydown', e => { if (e.key==='Escape') { e.target.value=''; state.searchFilter=''; renderIndex(); } });
+$('searchClear').addEventListener('click', () => { $('search').value=''; state.searchFilter=''; renderIndex(); $('search').focus(); });
+
+// settings menu
+$('settingsBtn').addEventListener('click', e => { e.stopPropagation(); $('settingsMenu').classList.toggle('show'); });
+document.addEventListener('click', e => { if (!e.target.closest('#settingsMenu') && !e.target.closest('#settingsBtn')) $('settingsMenu').classList.remove('show'); });
+
+$('exportBtn').addEventListener('click', () => {
+  $('settingsMenu').classList.remove('show');
+  const blob = new Blob([JSON.stringify(state.data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href=url; a.download=`senas-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
+  toast('Geëxporteerd','success');
+});
+
+$('publishBtn').addEventListener('click', async () => {
+  $('settingsMenu').classList.remove('show');
+  try {
+    const resp = await fetch(location.href);
+    let html = await resp.text();
+    const newData = JSON.stringify(state.data);
+    html = html.replace(/\/\*DATA_START\*\/[\s\S]*?\/\*DATA_END\*\//, '/*DATA_START*/' + newData + '/*DATA_END*/');
+    const blob = new Blob([html], {type:'text/html'});
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = 'index.html'; a.click(); URL.revokeObjectURL(url);
+    toast('index.html gedownload — upload naar GitHub', 'success');
+  } catch(e) {
+    toast('Kon pagina niet ophalen', 'error');
+  }
+});
+$('importBtn').addEventListener('click', () => { $('settingsMenu').classList.remove('show'); $('importInput').click(); });
+$('importInput').addEventListener('change', async e => {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    const parsed = JSON.parse(await file.text());
+    if (!parsed.categories) throw new Error('Verkeerd formaat');
+    if (!confirm('Huidige lijst vervangen?')) return;
+    migrate(parsed); state.data = parsed; persist(); renderIndex(); toast('Geïmporteerd','success');
+  } catch(err) { toast('Kon JSON niet lezen','error'); }
+  e.target.value='';
+});
+$('reloadPdfMenuItem').addEventListener('click', () => { $('settingsMenu').classList.remove('show'); $('pdfInputChange').click(); });
+$('resetBtn').addEventListener('click', () => {
+  $('settingsMenu').classList.remove('show');
+  if (!confirm('Lijst terugzetten naar standaard? Al je aanpassingen verdwijnen.')) return;
+  state.data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  state.activeSignId = null; state.editingSignId = null;
+  persist(); renderIndex(); $('pageRefStrip').style.display='none'; toast('Standaardlijst hersteld','success');
+});
+
+$('changePwBtn').addEventListener('click', () => {
+  $('settingsMenu').classList.remove('show');
+  showChangePwModal();
+});
+
+function showChangePwModal() {
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(29,35,51,.55);z-index:300;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);animation:fadeIn .15s ease';
+  ov.innerHTML = `
+    <div style="background:var(--paper);border-radius:12px;box-shadow:0 24px 64px -16px rgba(29,35,51,.36);width:min(400px,90%);padding:32px;display:flex;flex-direction:column;gap:16px;animation:slideUp .18s ease">
+      <div>
+        <div style="font-family:Fraunces,serif;font-size:22px;font-weight:500;color:var(--ink);margin-bottom:6px">Wachtwoord wijzigen</div>
+        <div style="font-size:13px;color:var(--ink-soft);line-height:1.45">Het wachtwoord wordt versleuteld opgeslagen — nooit als leesbare tekst.</div>
+      </div>
+      <div>
+        <label style="font-size:11px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);display:block;margin-bottom:4px">Huidig wachtwoord</label>
+        <input id="cpCurrent" type="password" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;background:#fff;color:var(--ink);outline:none">
+      </div>
+      <div>
+        <label style="font-size:11px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);display:block;margin-bottom:4px">Nieuw wachtwoord</label>
+        <input id="cpNew" type="password" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;background:#fff;color:var(--ink);outline:none">
+      </div>
+      <div>
+        <label style="font-size:11px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);display:block;margin-bottom:4px">Herhaal nieuw wachtwoord</label>
+        <input id="cpRepeat" type="password" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;background:#fff;color:var(--ink);outline:none">
+      </div>
+      <div id="cpErr" style="color:var(--warm);font-size:13px;display:none;padding:8px 12px;background:var(--warm-soft);border-radius:5px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px">
+        <button id="cpCancel" type="button" style="padding:8px 16px;border:1px solid var(--line);background:transparent;border-radius:6px;cursor:pointer;font:inherit;font-size:13.5px">Annuleer</button>
+        <button id="cpSave" type="button" style="padding:8px 16px;background:var(--accent);color:white;border:none;border-radius:6px;cursor:pointer;font:inherit;font-size:13.5px;font-weight:500">Opslaan</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  const cur = ov.querySelector('#cpCurrent');
+  const nw  = ov.querySelector('#cpNew');
+  const rep = ov.querySelector('#cpRepeat');
+  const err = ov.querySelector('#cpErr');
+  setTimeout(() => cur.focus(), 50);
+
+  function showErr(msg) { err.textContent = msg; err.style.display = 'block'; }
+  function hideErr() { err.style.display = 'none'; }
+
+  async function trySave() {
+    hideErr();
+    if (!cur.value) { showErr('Voer je huidige wachtwoord in.'); cur.focus(); return; }
+    if (!nw.value)  { showErr('Voer een nieuw wachtwoord in.'); nw.focus(); return; }
+    if (nw.value !== rep.value) { showErr('Nieuwe wachtwoorden komen niet overeen.'); rep.focus(); return; }
+    if (nw.value.length < 4) { showErr('Kies een wachtwoord van minimaal 4 tekens.'); nw.focus(); return; }
+    const curOk = await checkPw(cur.value);
+    if (!curOk) { showErr('Huidig wachtwoord is onjuist.'); cur.value=''; cur.focus(); return; }
+    const newHash = await hashPw(nw.value);
+    localStorage.setItem('signs-pw-hash', newHash);
+    ov.remove();
+    toast('Wachtwoord opgeslagen', 'success');
+  }
+
+  ov.querySelector('#cpSave').onclick = trySave;
+  ov.querySelector('#cpCancel').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  [cur, nw, rep].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') trySave(); if (e.key === 'Escape') ov.remove(); }));
+}
+
+// pdf controls
+function reRenderCurrentRef() {
+  if (!state.activeSignId) return;
+  const found = findSign(state.activeSignId);
+  if (!found) return;
+  const ref = (found.item.pages || [])[state.activeRefIdx];
+  if (!ref) return;
+  if (ref.url) { showImageRef(ref); return; }  // image ref — re-show image
+  if (!state.pdfDoc) return;
+  const pdfFrom = bookToPdf(ref.from);
+  const pdfTo   = ref.to ? bookToPdf(ref.to) : pdfFrom;
+  renderPDFRange(pdfFrom, pdfTo);
+}
+
+
+$('zoomIn').addEventListener('click',  () => { state.zoom = Math.min(2.5, state.zoom + .15); reRenderCurrentRef(); });
+$('zoomOut').addEventListener('click', () => { state.zoom = Math.max(.5,  state.zoom - .15); reRenderCurrentRef(); });
+
+
+
+$('pdfInputChange').addEventListener('change', e => { if (e.target.files[0]) handlePDFFile(e.target.files[0]); e.target.value=''; });
+$('backBtn').addEventListener('click', () => document.body.classList.remove('viewer-open'));
+
+let _rz;
+window.addEventListener('resize', () => { clearTimeout(_rz); _rz = setTimeout(() => reRenderCurrentRef(), 200); });
+
+// ══════════════════════════════════════════════
+// MIGRATION (old format → pages array)
+// ══════════════════════════════════════════════
+function migrate(data) {
+  for (const cat of data.categories||[]) {
+    for (const it of cat.items||[]) {
+      if (!it.pages) {
+        it.pages = it.page != null ? [{ from: it.page, ...(it.pageEnd ? { to: it.pageEnd } : {}) }] : [];
+        delete it.page; delete it.pageEnd;
+      }
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+async function init() {
+  Storage.init();
+  const saved = Storage.load();
+  state.data = saved || JSON.parse(JSON.stringify(DEFAULT_DATA));
+  migrate(state.data);
+  renderIndex();
+  await tryAutoLoad();
+  // Select first sign by default
+}
+
+init();
+</script>
+</body>
+</html>  background: var(--bg-soft);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ── header ── */
+header.index-header {
+  padding: 26px 28px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  position: sticky; top: 0; z-index: 10;
+}
+.header-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 4px; gap: 12px;
+}
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 8px;
+}
+h1 {
+  font-family: 'Fraunces', serif; font-weight: 500;
+  font-size: 34px; line-height: 1; letter-spacing: -.02em;
+  color: var(--ink); margin-bottom: 4px;
+}
+h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+.tagline { color: var(--ink-soft); font-size: 13.5px; margin-bottom: 16px; }
+.header-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.icon-btn {
+  width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid var(--line);
+  border-radius: 5px; cursor: pointer; color: var(--ink-soft);
+  transition: all .12s;
+}
+.icon-btn:hover { background: var(--bg); color: var(--ink); border-color: var(--accent-soft); }
+.icon-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.icon-btn.active:hover { background: var(--accent-deep); }
+
+/* ── search ── */
+.search-wrap { position: relative; }
+.search-input {
+  width: 100%; padding: 10px 36px 10px 38px;
+  border: 1px solid var(--line); background: #fefcf6;
+  border-radius: 6px; font-size: 14px; color: var(--ink);
+  transition: all .15s;
+}
+.search-input::placeholder { color: var(--ink-faint); }
+.search-input:focus {
+  outline: none; border-color: var(--accent);
+  background: #fff; box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.search-icon {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%); color: var(--ink-faint); pointer-events: none;
+}
+.search-clear {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px; border: none; background: transparent;
+  color: var(--ink-faint); cursor: pointer; border-radius: 50%;
+  display: none; align-items: center; justify-content: center;
+}
+.search-clear:hover { background: var(--bg); color: var(--ink); }
+.search-input:not(:placeholder-shown) ~ .search-clear { display: flex; }
+
+/* ── content ── */
+.content { padding: 16px 28px 80px; }
+.category { margin-bottom: 20px; }
+.category-header {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-bottom: 8px; padding: 6px 0 6px 4px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.category-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; color: var(--accent); font-weight: 500; letter-spacing: .05em;
+}
+.category-name {
+  font-family: 'Fraunces', serif; font-size: 15px; font-weight: 500;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--ink); flex: 1;
+}
+.category-actions { display: none; gap: 4px; }
+body.edit-mode .category-actions { display: flex; }
+
+.mini-btn {
+  width: 24px; height: 24px; border: 1px solid transparent;
+  background: transparent; border-radius: 4px; cursor: pointer;
+  color: var(--ink-faint); display: inline-flex; align-items: center;
+  justify-content: center; transition: all .12s;
+}
+.mini-btn:hover { background: var(--bg); color: var(--ink); border-color: var(--line-soft); }
+.mini-btn.danger:hover { background: var(--warm-soft); color: var(--warm); border-color: var(--warm); }
+
+.signs { list-style: none; }
+.sign {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start; gap: 8px;
+  padding: 8px 10px 8px 12px; border-radius: 6px;
+  cursor: pointer; transition: background .12s;
+  border-left: 2px solid transparent;
+}
+.sign:hover { background: var(--bg); }
+.sign.active { background: var(--accent-tint); border-left-color: var(--accent); }
+
+.sign-handle { display: none; flex-direction: column; gap: 1px; color: var(--ink-faint); padding-top: 4px; }
+body.edit-mode .sign-handle { display: flex; }
+
+.sign-text { line-height: 1.4; min-width: 0; grid-column: 2; }
+.sign-name { font-size: 14.5px; font-weight: 500; }
+.sign-translation { font-size: 13px; color: var(--ink-soft); font-style: italic; margin-left: 6px; }
+.sign-translation::before { content: '→ '; font-style: normal; color: var(--ink-faint); }
+.sign-note { display: block; font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; font-style: italic; }
+
+.sign-right { display: flex; align-items: flex-start; gap: 4px; }
+.page-badges { display: flex; flex-wrap: wrap; gap: 3px; justify-content: flex-end; }
+.page-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; color: var(--accent);
+  background: var(--bg); padding: 3px 8px;
+  border-radius: 4px; border: 1px solid var(--line-soft);
+  white-space: nowrap; font-weight: 500; cursor: pointer;
+  transition: all .1s;
+}
+.page-badge:hover, .page-badge.active-ref { background: var(--accent); color: white; border-color: var(--accent); }
+.sign.active .page-badge { background: #fff; border-color: var(--accent-soft); }
+.sign.active .page-badge:hover, .sign.active .page-badge.active-ref { background: var(--accent); color: white; }
+.page-badge.no-page { color: var(--ink-faint); cursor: default; }
+.page-badge.no-page:hover { background: var(--bg); color: var(--ink-faint); border-color: var(--line-soft); }
+
+.sign-actions { display: none; gap: 2px; margin-top: 1px; flex-shrink: 0; }
+body.edit-mode .sign-actions { display: flex; }
+body.edit-mode .page-badge { font-size: 11px; padding: 2px 6px; }
+
+/* ── edit form ── */
+.edit-form {
+  margin: 6px 0 12px; padding: 14px;
+  background: var(--paper-warm); border: 1px solid var(--line);
+  border-radius: 8px; display: grid; gap: 12px;
+}
+.edit-form label {
+  font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-soft); display: block; margin-bottom: 3px;
+}
+.edit-form input[type="text"],
+.edit-form input[type="number"],
+.edit-form textarea {
+  width: 100%; padding: 7px 10px;
+  border: 1px solid var(--line); background: #fff;
+  border-radius: 5px; font-size: 13.5px; color: var(--ink);
+  transition: border-color .12s, box-shadow .12s;
+}
+.edit-form input:focus, .edit-form textarea:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.edit-form textarea { resize: vertical; min-height: 36px; font-family: inherit; }
+.edit-form .form-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+  padding-top: 10px; border-top: 1px solid var(--line-soft);
+}
+.help { font-size: 11.5px; color: var(--ink-faint); line-height: 1.4; }
+
+/* ── pages list in edit form ── */
+.pages-label {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.pages-list { display: grid; gap: 6px; }
+.page-ref-row {
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  background: white; border: 1px solid var(--line);
+  border-radius: 6px; padding: 7px 8px;
+}
+.page-ref-row .pf { display: flex; align-items: center; gap: 4px; }
+.page-ref-row .pf-sep { color: var(--ink-faint); font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+.page-ref-row input[type="number"] {
+  width: 60px; flex-shrink: 0; padding: 4px 6px;
+  font-size: 13px; border: 1px solid var(--line);
+  border-radius: 5px; background: var(--bg); text-align: center;
+}
+.page-ref-row input:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-tint); background: #fff;
+}
+.pick-btn {
+  flex-shrink: 0; padding: 4px 7px;
+  border: 1px solid var(--line); background: transparent;
+  border-radius: 5px; cursor: pointer; font-size: 11px;
+  color: var(--accent); white-space: nowrap;
+  transition: all .12s; display: flex; align-items: center; gap: 3px;
+}
+.pick-btn:hover { background: var(--accent-tint); border-color: var(--accent-soft); }
+.pick-btn:disabled { opacity: .35; cursor: not-allowed; }
+.del-ref-btn {
+  flex-shrink: 0; width: 26px; height: 26px;
+  border: 1px solid transparent; background: transparent;
+  border-radius: 4px; cursor: pointer; color: var(--ink-faint);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.del-ref-btn:hover { background: var(--warm-soft); color: var(--warm); border-color: var(--warm); }
+.add-page-ref-btn {
+  align-self: flex-start; padding: 5px 11px;
+  border: 1px dashed var(--line); background: transparent;
+  border-radius: 5px; cursor: pointer; font-size: 12.5px;
+  color: var(--ink-soft); transition: all .12s;
+}
+.add-page-ref-btn:hover { background: var(--bg); color: var(--accent); border-color: var(--accent-soft); }
+.pages-empty { font-size: 12.5px; color: var(--ink-faint); font-style: italic; padding: 4px 0; }
+
+/* ── add buttons (edit mode) ── */
+.add-row { display: none; padding: 6px 12px; margin-top: 4px; }
+body.edit-mode .add-row { display: flex; }
+.add-btn {
+  background: transparent; color: var(--ink-soft);
+  border: 1px dashed var(--line); padding: 6px 12px;
+  border-radius: 5px; cursor: pointer; font-size: 12.5px;
+  transition: all .12s; width: 100%;
+}
+.add-btn:hover { background: var(--bg); color: var(--accent); border-color: var(--accent-soft); }
+.add-category-row { display: none; padding: 12px 0 24px; border-top: 1px dashed var(--line); margin-top: 16px; }
+body.edit-mode .add-category-row { display: block; }
+
+/* ── buttons ── */
+.btn {
+  padding: 7px 14px; border-radius: 5px; cursor: pointer;
+  font-size: 13px; font-weight: 500; border: 1px solid transparent;
+  transition: all .12s;
+}
+.btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-deep); }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn-ghost:hover { background: var(--bg); }
+.btn-danger { background: transparent; color: var(--warm); border-color: var(--warm-soft); }
+.btn-danger:hover { background: var(--warm-soft); }
+
+/* ── pdf banner ── */
+.pdf-banner {
+  margin: auto 24px 16px; padding: 9px 12px;
+  background: var(--bg); border: 1px solid var(--line-soft);
+  border-radius: 6px; display: flex; align-items: center;
+  justify-content: space-between; gap: 10px;
+  font-size: 12px; color: var(--ink-soft); flex-shrink: 0;
+}
+.pdf-banner .ok { color: var(--ok); }
+.pdf-banner .file-name {
+  font-family: 'IBM Plex Mono', monospace; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;
+}
+.link-btn {
+  background: transparent; border: none; color: var(--accent);
+  cursor: pointer; text-decoration: underline;
+  text-decoration-color: var(--accent-soft); text-underline-offset: 3px; font-size: 12px;
+}
+.link-btn:hover { color: var(--accent-deep); text-decoration-color: var(--accent); }
+
+/* ── viewer ── */
+.viewer-header {
+  padding: 14px 24px;
+  background: var(--paper); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; min-height: 64px;
+}
+.viewer-titles { flex: 1; min-width: 0; }
+.viewer-title {
+  font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500;
+  color: var(--ink); line-height: 1.2; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.viewer-meta {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+  color: var(--ink-soft); margin-top: 3px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── page-ref strip (multi-page) ── */
+.page-ref-strip {
+  padding: 8px 24px; background: var(--paper);
+  border-bottom: 1px solid var(--line-soft);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.page-ref-strip-label {
+  font-size: 11.5px; color: var(--ink-faint);
+  font-family: 'IBM Plex Mono', monospace; margin-right: 4px; flex-shrink: 0;
+}
+.strip-btn {
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+  padding: 4px 10px; border-radius: 4px;
+  border: 1px solid var(--line); background: var(--bg);
+  color: var(--accent); cursor: pointer; transition: all .12s; white-space: nowrap;
+}
+.strip-btn:hover { background: var(--accent-tint); border-color: var(--accent-soft); }
+.strip-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* ── viewer controls ── */
+.viewer-controls { display: flex; align-items: center; gap: 6px; }
+.ctrl-btn {
+  width: 32px; height: 32px; display: inline-flex; align-items: center;
+  justify-content: center; background: transparent; border: 1px solid var(--line);
+  border-radius: 5px; cursor: pointer; color: var(--ink); transition: all .12s;
+}
+.ctrl-btn:hover:not(:disabled) { background: var(--bg); border-color: var(--accent-soft); }
+.ctrl-btn:disabled { opacity: .4; cursor: not-allowed; }
+.ctrl-zoom {
+  width: auto; padding: 0 10px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px; color: var(--ink-soft); pointer-events: none;
+}
+.viewer-frame {
+  flex: 1; overflow: auto; padding: 12px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  gap: 12px; min-height: 0;
+  background: radial-gradient(ellipse at top, rgba(255,255,255,.4), transparent 60%), var(--bg-soft);
+}
+.pdf-canvas {
+  height: auto; max-width: 100%; flex-shrink: 0;
+  box-shadow: 0 1px 0 rgba(29,35,51,.04), 0 8px 24px -8px rgba(29,35,51,.18), 0 24px 48px -16px rgba(29,35,51,.12);
+  background: white; border-radius: 2px;
+}
+
+/* ── back btn ── */
+.back-btn {
+  display: none; align-items: center; gap: 6px; padding: 7px 12px;
+  background: transparent; border: 1px solid var(--line);
+  border-radius: 5px; cursor: pointer; font-size: 13px; color: var(--ink); flex-shrink: 0;
+}
+.back-btn:hover { background: var(--bg); }
+
+/* ── empty state ── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; width: 100%; min-height: 100%;
+  padding: 40px; text-align: center; color: var(--ink-soft);
+}
+.empty-illustration { width: 96px; height: 96px; margin-bottom: 24px; color: var(--ink-faint); opacity: .5; }
+.empty-state h2 {
+  font-family: 'Fraunces', serif; font-weight: 500; font-size: 24px;
+  color: var(--ink); margin-bottom: 10px; letter-spacing: -.01em;
+}
+.empty-state p { max-width: 400px; margin-bottom: 6px; font-size: 14px; line-height: 1.55; }
+.empty-state .pagenum {
+  font-family: 'IBM Plex Mono', monospace; font-size: 28px;
+  color: var(--accent); margin: 14px 0 6px; font-weight: 500;
+}
+.empty-state .actions { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.file-picker {
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
+  background: var(--accent); color: white; border-radius: 6px;
+  cursor: pointer; font-size: 14px; font-weight: 500;
+  transition: all .15s; border: none;
+}
+.file-picker:hover { background: var(--accent-deep); }
+.file-picker input { display: none; }
+
+/* ── settings menu ── */
+.settings-menu {
+  position: absolute; top: 56px; right: 28px;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px -8px rgba(29,35,51,.18), 0 4px 8px -4px rgba(29,35,51,.08);
+  padding: 6px; z-index: 100; min-width: 220px; display: none;
+}
+.settings-menu.show { display: block; }
+.menu-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  border: none; background: transparent; width: 100%;
+  text-align: left; cursor: pointer; border-radius: 4px;
+  font-size: 13.5px; color: var(--ink); transition: background .1s;
+}
+.menu-item:hover { background: var(--bg); }
+.menu-item.danger { color: var(--warm); }
+.menu-item.danger:hover { background: var(--warm-soft); }
+.menu-item svg { color: var(--ink-soft); flex-shrink: 0; }
+.menu-item.danger svg { color: var(--warm); }
+.menu-divider { height: 1px; background: var(--line-soft); margin: 4px 0; }
+
+/* ── page picker overlay ── */
+.picker-overlay {
+  position: fixed; inset: 0; background: rgba(29,35,51,.55);
+  z-index: 200; display: flex; align-items: center; justify-content: center;
+  padding: 24px; backdrop-filter: blur(2px);
+  animation: fadeIn .15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.picker-box {
+  background: var(--paper); border-radius: 12px;
+  box-shadow: 0 24px 64px -16px rgba(29,35,51,.36), 0 8px 24px -8px rgba(29,35,51,.14);
+  width: min(820px, 100%); max-height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: slideUp .18s ease;
+}
+@keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.picker-header {
+  padding: 18px 22px 14px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-shrink: 0;
+}
+.picker-header h3 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 18px; }
+.picker-header p { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+.picker-close {
+  width: 30px; height: 30px; border: 1px solid var(--line); background: transparent;
+  border-radius: 5px; cursor: pointer; color: var(--ink);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .12s;
+}
+.picker-close:hover { background: var(--bg); }
+.picker-nav {
+  padding: 12px 22px; border-bottom: 1px solid var(--line-soft);
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap;
+}
+.picker-page-input { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-soft); }
+.picker-page-input input {
+  width: 60px; padding: 5px 8px; border: 1px solid var(--line);
+  background: #fff; border-radius: 5px; font-size: 13px; text-align: center;
+}
+.picker-page-input input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-tint); }
+.picker-select-btns { display: flex; gap: 6px; margin-left: auto; }
+.picker-body {
+  flex: 1; overflow: auto; padding: 20px;
+  display: flex; justify-content: center; background: var(--bg-soft); min-height: 300px;
+}
+.picker-canvas {
+  max-width: 100%; height: auto;
+  box-shadow: 0 4px 24px -8px rgba(29,35,51,.22), 0 12px 40px -16px rgba(29,35,51,.12);
+  background: white; border-radius: 2px;
+  border: 2px solid transparent; transition: border-color .15s; cursor: pointer;
+}
+.picker-canvas:hover { border-color: var(--accent); }
+.picker-footer {
+  padding: 12px 22px; border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0;
+}
+.picker-info { font-size: 12.5px; color: var(--ink-soft); }
+.picker-info strong { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--accent); }
+
+/* ── toast ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--ink); color: var(--paper);
+  padding: 10px 18px; border-radius: 6px; font-size: 13.5px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  transition: transform .25s ease; z-index: 1000; pointer-events: none; max-width: 80%;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--warm); }
+.toast.success { background: var(--ok); }
+
+/* ── storage warning ── */
+.storage-warning {
+  background: var(--warm-soft); border-left: 3px solid var(--warm);
+  padding: 10px 14px; margin: 12px 28px 0;
+  font-size: 12.5px; color: var(--ink); border-radius: 4px; line-height: 1.45;
+}
+
+/* ── scrollbars ── */
+.index-panel::-webkit-scrollbar, .viewer-frame::-webkit-scrollbar,
+.picker-body::-webkit-scrollbar { width: 9px; height: 9px; }
+.index-panel::-webkit-scrollbar-track, .viewer-frame::-webkit-scrollbar-track,
+.picker-body::-webkit-scrollbar-track { background: transparent; }
+.index-panel::-webkit-scrollbar-thumb, .viewer-frame::-webkit-scrollbar-thumb,
+.picker-body::-webkit-scrollbar-thumb {
+  background: var(--line); border-radius: 4px; border: 2px solid transparent;
+  background-clip: content-box;
+}
+mark { background: rgba(184,85,64,.18); color: inherit; padding: 0 2px; border-radius: 2px; }
+.no-results { text-align: center; padding: 60px 20px; color: var(--ink-soft); font-size: 14px; }
+.no-results strong { color: var(--ink); font-weight: 500; }
+.spinner {
+  width: 22px; height: 22px; border: 2px solid var(--line);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="index-panel">
+    <header class="index-header">
+      <div class="header-top">
+        <div>
+          <div class="eyebrow">Freeplay · Ritmo con Signs</div>
+          <h1>Signs <em>index</em></h1>
+        </div>
+        <div class="header-actions"></div>
+      </div>
+      
+      <div class="search-wrap">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <input type="text" class="search-input" id="search" placeholder="Zoek op naam, vertaling, pagina…" autocomplete="off">
+        <button class="search-clear" id="searchClear" type="button">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+    <div class="storage-warning" id="storageWarning" style="display:none">
+      <strong>Let op:</strong> wijzigingen worden niet opgeslagen in deze modus. Open het bestand lokaal voor volledige werking.
+    </div>
+    <div class="content" id="content"></div>
+    <div class="pdf-banner" id="pdfBanner" style="display:none">
+      <span class="ok">✓</span>
+      <span class="file-name" id="pdfFileName">Handboek geladen</span>
+      <input type="file" accept="application/pdf" id="pdfInputChange" style="display:none">
+    </div>
+    <div class="index-bottom-bar">
+      <button class="icon-btn" id="editToggle" title="Bewerken aan/uit" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2L5 13l-3 .5.5-3 9-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="edit-mode-label">Bewerkmodus</span>
+      <button class="icon-btn edit-only" id="settingsBtn" title="Meer opties" type="button" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg>
+      </button>
+    </div>
+    <div class="settings-menu" id="settingsMenu">
+      <button class="menu-item" id="exportBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 11V2m0 9l3-3m-3 3L5 8M2 13h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Exporteer als JSON
+      </button>
+      <button class="menu-item" id="publishBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v6M5 8l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Publiceer (download index.html)
+      </button>
+      <button class="menu-item" id="importBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 5v9m0-9L5 8m3-3l3 3M2 3h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Importeer JSON
+      </button>
+      <input type="file" id="importInput" accept="application/json" style="display:none">
+      <div class="menu-divider"></div>
+      <button class="menu-item" id="reloadPdfMenuItem" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 1 1 1.2 3.6M2 12V8h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        PDF opnieuw laden
+      </button>
+      <div class="menu-divider"></div>
+      <button class="menu-item" id="changePwBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        Wachtwoord wijzigen
+      </button>
+      <div class="menu-divider"></div>
+      <button class="menu-item danger" id="resetBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 5h10M6 5V3h4v2M5 5l1 9h4l1-9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Terug naar standaardlijst
+      </button>
+    </div>
+  </aside>
+
+  <main class="viewer-panel">
+    <div class="viewer-header">
+      <button class="back-btn" id="backBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 11L4.5 7l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Terug
+      </button>
+      <div class="viewer-titles">
+        <div class="viewer-title" id="viewerTitle">Geen sign geselecteerd</div>
+        <div class="viewer-meta" id="viewerMeta">Klik links op een sign</div>
+      </div>
+      <div class="viewer-controls" id="viewerControls" style="display:none">
+
+        <button class="ctrl-btn" id="zoomOut" title="Uitzoomen" type="button">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+        <span class="ctrl-btn ctrl-zoom" id="zoomLevel">100%</span>
+        <button class="ctrl-btn" id="zoomIn" title="Inzoomen" type="button">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="pageRefStrip" style="display:none" class="page-ref-strip"></div>
+    <div class="viewer-frame" id="viewerFrame"></div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════
+// DATA  (pages = [{from, to?}])
+// ══════════════════════════════════════════════
+const DEFAULT_DATA = /*DATA_START*/{
+  version: 2,
+  categories: [
+    { id:'c1', name:'Start & Groep', items:[
+      { id:'s101', name:'Start',              translation:'Entry',              pages:[{from:46}] },
+      { id:'s102', name:'Free Contribution',                                    pages:[{from:48}] },
+      { id:'s103', name:'Uit / Stop',                                           pages:[{from:49}] },
+      { id:'s104', name:'Select',                                               pages:[{from:50}] },
+      { id:'s105', name:'Split into Sections',                                  pages:[{from:51}] },
+      { id:'s106', name:'Whole Group',                                          pages:[{from:69}] },
+    ]},
+    { id:'c2', name:'Dynamiek & Ruimte', items:[
+      { id:'s201', name:'Volume',             note:'twee platte handen voor je middel (volume knop)', pages:[] },
+      { id:'s202', name:'Dynamic',                                              pages:[{from:53,to:55}] },
+      { id:'s203', name:'Panning',                                              pages:[{from:84}] },
+      { id:'s204', name:'Activity / Density',                                   pages:[{from:91}] },
+      { id:'s205', name:'Heterophony',                                          pages:[{from:62}] },
+    ]},
+    { id:'c3', name:'Speelwijze', items:[
+      { id:'s301', name:'Kort / Staccato',                                      pages:[{from:56}] },
+      { id:'s302', name:'Sustained Note',                                       pages:[{from:57}] },
+      { id:'s303', name:'Solo',                                                 pages:[{from:58}] },
+      { id:'s304', name:'Wacht',                                                pages:[{from:72}] },
+      { id:'s305', name:'Basis',                                                pages:[{from:76}] },
+    ]},
+    { id:'c4', name:'Ideeën & Ontwikkeling', items:[
+      { id:'s401', name:'New / Change Idea',                                    pages:[{from:114}] },
+      { id:'s402', name:'Support idee',                                         pages:[{from:60}] },
+      { id:'s403', name:'Kopieer (unison)',                                     pages:[{from:78}] },
+      { id:'s404', name:'Ontwikkel idee',   translation:'Return / Develop Idea',pages:[{from:69}] },
+      { id:'s405', name:'Ontwikkel pitch',  translation:'Develop Pitch',         pages:[{from:204}] },
+      { id:'s406', name:'Ontwikkel ritme',  translation:'Develop Rhythm',        pages:[{from:205}] },
+      { id:'s407', name:'Loop',                                                 pages:[{from:64}] },
+    ]},
+    { id:'c5', name:'Breaks', items:[
+      { id:'s501', name:'Break & continue',                                     pages:[{from:94}] },
+      { id:'s502', name:'Break Call & Response',                                pages:[{from:96}] },
+      { id:'s503', name:'Break Ping pong',                                      pages:[{from:98}] },
+    ]},
+    { id:'c6', name:'Melodie & Harmonie', items:[
+      { id:'s601', name:'Melody',                                               pages:[{from:200}] },
+      { id:'s602', name:'Chords',                                               pages:[{from:209}] },
+      { id:'s603', name:'½ toon omhoog/omlaag', translation:'Chromatic Transposition', pages:[{from:210}] },
+    ]},
+    { id:'c7', name:'Tempo & Feel', items:[
+      { id:'s701', name:'Tempo Speed up / Slow down',                           pages:[{from:71}] },
+      { id:'s702', name:'Beats per measure',                                    pages:[{from:76}] },
+      { id:'s703', name:'Subdivision', note:'alleen recht en triplet feel!',   pages:[{from:78}] },
+    ]},
+  ]
+}/*DATA_END*/;
+
+// ── Page number conversion (book page <-> PDF page) ──────────
+// Book pages are stored and displayed; PDF offset is subtracted when rendering.
+// To change the offset, edit PDF_OFFSET below (or PDF_OFFSET_MELODIC for p.199+).
+const PDF_OFFSET = 17;
+const PDF_OFFSET_MELODIC = 18; // book pages 199+
+// Password is stored as SHA-256 hash — never as plaintext.
+// Default password is 'ritmo'. Change it via the settings menu in the app.
+const DEFAULT_PW_HASH = 'eb47a6774fd0123a9323fd08c368e537518727458141fe75d32d012fbefcb1c4';
+
+async function hashPw(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+function storedHash() { return localStorage.getItem('signs-pw-hash') || DEFAULT_PW_HASH; }
+async function checkPw(pw) { return (await hashPw(pw)) === storedHash(); }
+
+function pdfToBook(pdfPage) {
+  if (!pdfPage) return null;
+  return pdfPage + (pdfPage >= (199 - PDF_OFFSET_MELODIC) ? PDF_OFFSET_MELODIC : PDF_OFFSET);
+}
+
+function bookToPdf(bookPage) {
+  if (!bookPage) return null;
+  const offset = bookPage >= 199 ? PDF_OFFSET_MELODIC : PDF_OFFSET;
+  return Math.max(1, bookPage - offset);
+}
+
+// ══════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════
+const Storage = {
+  ok: true,
+  init() {
+    try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); }
+    catch(e) { this.ok = false; }
+    if (!this.ok) $('storageWarning').style.display='';
+  },
+  save(data) {
+    if (!this.ok) return;
+    try { localStorage.setItem('senas-v2', JSON.stringify(data)); } catch(e) {}
+  },
+  load() {
+    if (!this.ok) return null;
+    try { const r=localStorage.getItem('senas-v2'); return r ? JSON.parse(r) : null; } catch(e) { return null; }
+  },
+  _db: null,
+  _openDB() {
+    if (this._db) return this._db;
+    this._db = new Promise((res,rej) => {
+      try {
+        const r = indexedDB.open('senas3', 1);
+        r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('f')) r.result.createObjectStore('f'); };
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      } catch(e) { rej(e); }
+    });
+    return this._db;
+  },
+  async savePDF(buf, name) {
+    try {
+      const db = await this._openDB();
+      return new Promise(res => {
+        const tx = db.transaction('f','readwrite'), s = tx.objectStore('f');
+        s.put(buf,'data'); s.put(name,'name');
+        tx.oncomplete = () => res(true); tx.onerror = () => res(false);
+      });
+    } catch(e) { return false; }
+  },
+  async loadPDF() {
+    try {
+      const db = await this._openDB();
+      return new Promise(res => {
+        const tx = db.transaction('f','readonly'), s = tx.objectStore('f');
+        const dr = s.get('data'), nr = s.get('name');
+        tx.oncomplete = () => dr.result ? res({buffer:dr.result, name:nr.result||'manual.pdf'}) : res(null);
+        tx.onerror = () => res(null);
+      });
+    } catch(e) { return null; }
+  }
+};
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+const state = {
+  data: null,
+  pdfDoc: null,
+  pdfFileName: '',
+  activeSignId: null,
+  activeRefIdx: 0,       // which page-ref is currently shown
+  currentPage: null,
+  zoom: 1.0,
+  editMode: false,
+  editingSignId: null,
+  searchFilter: '',
+};
+
+// ══════════════════════════════════════════════
+// UTIL
+// ══════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+const uid = () => 's_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
+
+function hi(s, f) {
+  if (!s) return '';
+  const e = esc(s);
+  if (!f) return e;
+  return e.replace(new RegExp('('+f.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<mark>$1</mark>');
+}
+
+function refLabel(ref) {
+  if (ref.url) return ref.label || 'afbeelding';
+  return ref.to ? `p. ${ref.from}-${ref.to}` : `p. ${ref.from}`;
+}
+
+function allPagesLabel(item) {
+  if (!item.pages || !item.pages.length) return null;
+  return item.pages.map(refLabel).join(', ');
+}
+
+function findSign(id) {
+  for (const cat of state.data.categories) {
+    const item = cat.items.find(it => it.id === id);
+    if (item) return { item, category: cat };
+  }
+  return null;
+}
+
+let _toastTimer;
+function toast(msg, type='') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.className='toast', 2400);
+}
+
+function persist() { Storage.save(state.data); }
+
+// ══════════════════════════════════════════════
+// RENDER INDEX
+// ══════════════════════════════════════════════
+function renderIndex() {
+  const f = state.searchFilter.trim().toLowerCase();
+  let html = '', n = 1, total = 0;
+
+  for (const cat of state.data.categories) {
+    const filtered = cat.items.filter(it => {
+      if (!f) return true;
+      return [it.name, it.translation, it.note, cat.name, allPagesLabel(it)||'']
+        .filter(Boolean).join(' ').toLowerCase().includes(f);
+    });
+    if (!filtered.length && f) { n++; continue; }
+    total += filtered.length;
+
+    html += `<section class="category" data-cat-id="${esc(cat.id)}">`;
+    html += `<div class="category-header">
+      <span class="category-num">${String(n).padStart(2,'0')}</span>
+      <span class="category-name">${hi(cat.name, f)}</span>
+      <div class="category-actions">
+        <button class="mini-btn" data-act="cat-up" type="button" title="Omhoog"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 7l2.5-2.5L8 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn" data-act="cat-down" type="button" title="Omlaag"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 4l2.5 2.5L8 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn" data-act="cat-rename" type="button" title="Hernoem"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M8 1.5l1.5 1.5L4 8.5l-2 .5.5-2L8 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn danger" data-act="cat-delete" type="button" title="Verwijder categorie"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 3h7M4 3V2h3v1M3.5 3l.4 6h3.2l.4-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+      </div>
+    </div>`;
+
+    html += '<ul class="signs">';
+    for (const it of filtered) {
+      html += renderSignRow(it, cat.id, f);
+      if (state.editingSignId === it.id) html += renderEditForm(it, cat.id);
+    }
+    html += '</ul>';
+    html += `<div class="add-row"><button class="add-btn" data-act="add-sign" data-cat-id="${esc(cat.id)}" type="button">+ sign toevoegen</button></div>`;
+    html += '</section>';
+    n++;
+  }
+
+  if (!total && f) html = `<div class="no-results">Geen resultaten voor <strong>"${esc(state.searchFilter)}"</strong>.</div>`;
+  html += `<div class="add-category-row"><button class="add-btn" data-act="add-cat" type="button">+ Nieuwe categorie</button></div>`;
+  $('content').innerHTML = html;
+}
+
+function renderSignRow(it, catId, f) {
+  const cls = state.activeSignId === it.id ? 'sign active' : 'sign';
+  const transl = it.translation ? `<span class="sign-translation">${hi(it.translation,f)}</span>` : '';
+  const note = it.note ? `<span class="sign-note">${hi(it.note,f)}</span>` : '';
+
+  let badgesHtml;
+  if (state.editMode) {
+    if (!it.pages || !it.pages.length) {
+      badgesHtml = `<div class="page-badges"><span class="page-badge no-page">geen p.</span></div>`;
+    } else {
+      const isActive = state.activeSignId === it.id;
+      badgesHtml = `<div class="page-badges">${it.pages.map((ref,i) => {
+        const ac = isActive && i === state.activeRefIdx ? 'active-ref' : '';
+        const lbl = ref.url ? '&#128247;' : esc(refLabel(ref));
+        return `<span class="page-badge ${ac}" data-ref-idx="${i}">${lbl}</span>`;
+      }).join('')}</div>`;
+    }
+  } else {
+    badgesHtml = '';
+  }
+
+  return `<li class="${cls}" data-sign-id="${esc(it.id)}" data-cat-id="${esc(catId)}">
+    <div class="sign-handle" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><circle cx="3" cy="3" r="1"/><circle cx="7" cy="3" r="1"/><circle cx="3" cy="7" r="1"/><circle cx="7" cy="7" r="1"/></svg></div>
+    <div class="sign-text">
+      <span class="sign-name">${hi(it.name,f)}</span>${transl}${note}
+    </div>
+    <div class="sign-right">
+      ${badgesHtml}
+      <div class="sign-actions">
+        <button class="mini-btn" data-act="sign-up" type="button" title="Omhoog"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 7l2.5-2.5L8 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn" data-act="sign-down" type="button" title="Omlaag"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M3 4l2.5 2.5L8 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn" data-act="sign-edit" type="button" title="Bewerk"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M8 1.5l1.5 1.5L4 8.5l-2 .5.5-2L8 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></button>
+        <button class="mini-btn danger" data-act="sign-delete" type="button" title="Verwijder"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 3h7M4 3V2h3v1M3.5 3l.4 6h3.2l.4-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+      </div>
+    </div>
+  </li>`;
+}
+
+function renderEditForm(it, catId) {
+  const maxP = state.pdfDoc ? state.pdfDoc.numPages : 999;
+  const hasPdf = !!state.pdfDoc;
+  const dis = hasPdf ? '' : 'disabled title="Laad eerst de PDF"';
+  const pages = it.pages || [];
+
+  let refsHtml = '';
+  if (pages.length === 0) {
+    refsHtml = '<p class="pages-empty">Nog geen pagina\'s toegevoegd.</p>';
+  } else {
+    refsHtml = pages.map((ref, i) => {
+      const isImg = !!ref.url;
+      return `
+      <div class="page-ref-row" data-ref-idx="${i}" data-ref-type="${isImg ? 'image' : 'pdf'}">
+        <select class="ref-type-select" data-act="ref-type" style="flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px;color:var(--ink-soft);cursor:pointer;max-width:100px">
+          <option value="pdf" ${isImg ? '' : 'selected'}>PDF pagina</option>
+          <option value="image" ${isImg ? 'selected' : ''}>Afbeelding</option>
+        </select>
+        ${isImg ? `
+        <input type="text" class="url-input" value="${esc(ref.url)}" placeholder="https://..." style="flex:1;padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">
+        <input type="text" class="label-input" value="${esc(ref.label||'')}" placeholder="naam (opt.)" style="width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:13px;background:#fff">
+        ` : `
+        <div class="pf">
+          <input type="number" class="from-input" value="${ref.from ?? ''}" min="1" max="${maxP}" placeholder="van">
+          <button class="pick-btn" data-act="pick-from" data-ref-idx="${i}" ${dis} type="button">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Kies
+          </button>
+        </div>
+        <span class="pf-sep">t/m (opt.)</span>
+        <div class="pf">
+          <input type="number" class="to-input" value="${ref.to ?? ''}" min="1" max="${maxP}" placeholder="—">
+          <button class="pick-btn" data-act="pick-to" data-ref-idx="${i}" ${dis} type="button">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Kies
+          </button>
+        </div>
+        `}
+        <button class="del-ref-btn" data-act="del-ref" data-ref-idx="${i}" type="button" title="Verwijder">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>`;
+    }).join('');
+  }
+
+  return `<li><form class="edit-form" data-sign-id="${esc(it.id)}" data-cat-id="${esc(catId)}" onsubmit="return false">
+    <div>
+      <label>Naam</label>
+      <input type="text" name="name" value="${esc(it.name||'')}" autofocus>
+    </div>
+    <div>
+      <label>Vertaling (optioneel)</label>
+      <input type="text" name="translation" value="${esc(it.translation||'')}" placeholder="bv. Develop Pitch">
+    </div>
+    <div>
+      <div class="pages-label">
+        <label style="margin:0">Pagina's in het handboek</label>
+        <button class="add-page-ref-btn" data-act="add-ref" type="button">+ Pagina toevoegen</button>
+      </div>
+      <div class="pages-list" style="margin-top:8px">${refsHtml}</div>
+      ${hasPdf ? '' : '<p class="help" style="margin-top:6px">Laad de PDF om pagina\'s visueel te kunnen kiezen.</p>'}
+    </div>
+    <div>
+      <label>Notitie (optioneel)</label>
+      <textarea name="note" rows="1" placeholder="bv. twee platte handen voor je middel">${esc(it.note||'')}</textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" data-act="edit-cancel" type="button">Annuleer</button>
+      <button class="btn btn-primary" data-act="edit-save" type="submit">Opslaan</button>
+    </div>
+  </form></li>`;
+}
+
+// ══════════════════════════════════════════════
+// EDIT ACTIONS
+// ══════════════════════════════════════════════
+function moveItem(arr, idx, dir) {
+  const ni = idx + dir;
+  if (ni < 0 || ni >= arr.length) return false;
+  const [x] = arr.splice(idx, 1); arr.splice(ni, 0, x); return true;
+}
+
+function handleSignAction(act, signId, catId) {
+  const cat = state.data.categories.find(c => c.id === catId);
+  if (!cat) return;
+  const idx = cat.items.findIndex(it => it.id === signId);
+  if (idx < 0) return;
+  switch (act) {
+    case 'sign-up':   if (moveItem(cat.items, idx, -1)) { persist(); renderIndex(); } break;
+    case 'sign-down': if (moveItem(cat.items, idx, 1))  { persist(); renderIndex(); } break;
+    case 'sign-edit':
+      state.editingSignId = state.editingSignId === signId ? null : signId;
+      renderIndex();
+      break;
+    case 'sign-delete':
+      if (confirm(`"${cat.items[idx].name}" verwijderen?`)) {
+        cat.items.splice(idx, 1);
+        if (state.activeSignId === signId) state.activeSignId = null;
+        if (state.editingSignId === signId) state.editingSignId = null;
+        persist(); renderIndex(); updateViewerStrip(); toast('Verwijderd','success');
+      }
+      break;
+  }
+}
+
+function handleCatAction(act, catId) {
+  const idx = state.data.categories.findIndex(c => c.id === catId);
+  if (idx < 0) return;
+  const cat = state.data.categories[idx];
+  switch (act) {
+    case 'cat-up':   if (moveItem(state.data.categories, idx, -1)) { persist(); renderIndex(); } break;
+    case 'cat-down': if (moveItem(state.data.categories, idx, 1))  { persist(); renderIndex(); } break;
+    case 'cat-rename': {
+      const n = prompt('Nieuwe naam:', cat.name);
+      if (n && n.trim() && n !== cat.name) { cat.name = n.trim(); persist(); renderIndex(); }
+      break;
+    }
+    case 'cat-delete':
+      if (confirm(`Categorie "${cat.name}" verwijderen met alle signs?`)) {
+        if (cat.items.some(it => it.id === state.activeSignId)) state.activeSignId = null;
+        if (cat.items.some(it => it.id === state.editingSignId)) state.editingSignId = null;
+        state.data.categories.splice(idx, 1);
+        persist(); renderIndex(); toast('Categorie verwijderd','success');
+      }
+      break;
+  }
+}
+
+function readPagesFromForm(form) {
+  return [...form.querySelectorAll('.page-ref-row')].map(row => {
+    const type = row.dataset.refType;
+    if (type === 'image') {
+      const url = row.querySelector('.url-input')?.value.trim();
+      if (!url) return null;
+      const label = row.querySelector('.label-input')?.value.trim();
+      return label ? { url, label } : { url };
+    } else {
+      const fromVal = parseInt(row.querySelector('.from-input')?.value);
+      const toVal = parseInt(row.querySelector('.to-input')?.value);
+      if (!fromVal || isNaN(fromVal)) return null;
+      const ref = { from: fromVal };
+      if (toVal && !isNaN(toVal) && toVal > fromVal) ref.to = toVal;
+      return ref;
+    }
+  }).filter(Boolean);
+}
+
+function saveEditForm(form) {
+  const signId = form.dataset.signId, catId = form.dataset.catId;
+  const cat = state.data.categories.find(c => c.id === catId);
+  if (!cat) return;
+  const item = cat.items.find(it => it.id === signId);
+  if (!item) return;
+
+  const name = form.querySelector('[name="name"]').value.trim();
+  if (!name) { toast('Naam is verplicht','error'); return; }
+
+  item.name = name;
+  const tr = form.querySelector('[name="translation"]').value.trim();
+  const nt = form.querySelector('[name="note"]').value.trim();
+  if (tr) item.translation = tr; else delete item.translation;
+  if (nt) item.note = nt; else delete item.note;
+  item.pages = readPagesFromForm(form);
+
+  state.editingSignId = null;
+  persist(); renderIndex();
+  toast('Opgeslagen','success');
+  if (state.activeSignId === signId) {
+    const found = findSign(signId);
+    if (found) showSign(found.item, found.category, state.activeRefIdx);
+  }
+}
+
+function addNewSign(catId) {
+  const cat = state.data.categories.find(c => c.id === catId);
+  if (!cat) return;
+  const newItem = { id: uid(), name: 'Nieuw sign', pages: [] };
+  cat.items.push(newItem);
+  state.editingSignId = newItem.id;
+  persist(); renderIndex();
+  setTimeout(() => {
+    const el = document.querySelector(`[data-sign-id="${newItem.id}"]`);
+    if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+  }, 50);
+}
+
+function addNewCategory() {
+  const n = prompt('Naam voor de nieuwe categorie:','');
+  if (!n || !n.trim()) return;
+  state.data.categories.push({ id:uid(), name:n.trim(), items:[] });
+  persist(); renderIndex(); toast('Categorie toegevoegd','success');
+}
+
+// ══════════════════════════════════════════════
+// VIEWER
+// ══════════════════════════════════════════════
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const PDF_URL = 'https://superb-bombolone-f68024.netlify.app/manual.pdf';
+
+async function loadPDFFromBuffer(buf, name) {
+  try {
+    state.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+    state.pdfFileName = name;
+    $('pdfFileName').textContent = name;
+    $('pdfBanner').style.display = '';
+    return true;
+  } catch(e) { console.error(e); toast('Kon PDF niet laden','error'); return false; }
+}
+
+async function loadPDFFromURL(url, name) {
+  // pdf.js fetches only what it needs via HTTP range requests — no full download
+  try {
+    const loadingTask = pdfjsLib.getDocument({
+      url,
+      rangeChunkSize: 65536,
+      disableAutoFetch: false,
+      disableStream: false,
+      withCredentials: false,
+    });
+    state.pdfDoc = await loadingTask.promise;
+    state.pdfFileName = name;
+    $('pdfFileName').textContent = name;
+    $('pdfBanner').style.display = '';
+    return true;
+  } catch(e) {
+    console.error('URL streaming failed:', e);
+    return false;
+  }
+}
+
+async function handlePDFFile(file) {
+  if (!file) return;
+  showPDFLoading(0);
+  try {
+    const buf = await file.arrayBuffer();
+    const ok = await loadPDFFromBuffer(buf.slice(0), file.name);
+    if (ok) {
+      await Storage.savePDF(buf.slice(0), file.name);
+      if (state.activeSignId) {
+        const found = findSign(state.activeSignId);
+        if (found) { showSign(found.item, found.category, state.activeRefIdx); return; }
+      }
+      showWelcome();
+    }
+  } catch(e) { toast('Kon PDF niet laden','error'); showInitialEmpty(); }
+}
+
+function showPDFLoading(pct) {
+  // If a sign is selected, show loading overlay in viewer without replacing sign context
+  const signTitle = $('viewerTitle').textContent;
+  const signMeta  = $('viewerMeta').textContent;
+  const displayPct = Math.max(8, pct); // always start at 8% so it looks alive
+  $('viewerFrame').innerHTML = `
+    <div class="empty-state">
+      <svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <h2 style="margin-bottom:4px">Even geduld</h2>
+      <p style="margin-bottom:0">Alle gebaren worden geladen.</p>
+      <div style="width:240px;background:var(--line-soft);border-radius:99px;height:7px;margin-top:20px;overflow:hidden">
+        <div id="pdfProgressBar" style="height:100%;background:var(--accent);border-radius:99px;width:${displayPct}%;transition:width .4s ease"></div>
+      </div>
+      <p style="margin-top:8px;font-size:12px;color:var(--ink-faint)" id="pdfProgressPct">${displayPct}%</p>
+    </div>`;
+  // Animate from 8% to ~15% in the first second to show life
+  if (pct === 0) {
+    setTimeout(() => {
+      const bar = document.getElementById('pdfProgressBar');
+      const lbl = document.getElementById('pdfProgressPct');
+      if (bar && bar.style.width === '8%') {
+        bar.style.width = '15%';
+        if (lbl) lbl.textContent = '15%';
+      }
+    }, 800);
+  }
+}
+
+async function fetchWithProgress(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const total = parseInt(resp.headers.get('Content-Length') || '0');
+  const reader = resp.body.getReader();
+  const chunks = [];
+  let received = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    if (total) {
+      const pct = Math.round(received / total * 100);
+      const bar = document.getElementById('pdfProgressBar');
+      const lbl = document.getElementById('pdfProgressPct');
+      if (bar) bar.style.width = pct + '%';
+      if (lbl) lbl.textContent = pct + '%';
+    }
+  }
+  const buf = new Uint8Array(received);
+  let pos = 0;
+  for (const chunk of chunks) { buf.set(chunk, pos); pos += chunk.length; }
+  return buf.buffer;
+}
+
+async function tryLoadServer() {
+  try {
+    showPDFLoading(0);
+    // Try streaming first (fast — only fetches needed pages)
+    const streamOk = await loadPDFFromURL(PDF_URL, 'manual.pdf');
+    if (streamOk) return true;
+    // Fallback: full download with progress bar
+    const buf = await fetchWithProgress(PDF_URL);
+    const ok = await loadPDFFromBuffer(buf.slice(0), 'manual.pdf');
+    if (ok) await Storage.savePDF(buf.slice(0), 'manual.pdf');
+    return ok;
+  } catch(e) {
+    console.error('Server load failed:', e);
+    return false;
+  }
+}
+
+async function tryAutoLoad() {
+  // Try cache first — instant if available
+  const cached = await Storage.loadPDF();
+  if (cached) {
+    const ok = await loadPDFFromBuffer(cached.buffer, cached.name);
+    if (ok) { showWelcome(); return; }
+  }
+  // Stream from server (or full download as fallback)
+  const ok = await tryLoadServer();
+  if (ok) { showWelcome(); return; }
+  showInitialEmpty();
+}
+
+function showWelcome() {
+  $('viewerTitle').textContent = 'Signs index';
+  $('viewerMeta').textContent = state.pdfDoc ? `${state.pdfFileName} · ${state.pdfDoc.numPages} pagina\'s` : '';
+  $('viewerControls').style.display = 'none';
+  $('pageRefStrip').style.display = 'none';
+  $('viewerFrame').innerHTML = '';
+}
+
+function showInitialEmpty() {
+  $('viewerFrame').innerHTML = `
+    <div class="empty-state">
+      <svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <h2>Klaar om mee te spelen</h2>
+      <p>Klik links op een sign om de pagina te zien.</p>
+      <p>Laad eenmalig het handboek; daarna onthoudt de app het.</p>
+      <div class="actions">
+        <label class="file-picker">
+          <input type="file" accept="application/pdf" class="pdf-input-inline">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Laad PDF
+        </label>
+      </div>
+    </div>`;
+  wirePdfInputs();
+}
+
+function wirePdfInputs() {
+  document.querySelectorAll('.pdf-input-inline').forEach(el =>
+    el.addEventListener('change', e => handlePDFFile(e.target.files[0])));
+}
+
+function showSign(item, cat, refIdx = 0) {
+  document.body.classList.add('viewer-open');
+  state.activeSignId = item.id;
+  const pages = item.pages || [];
+  state.activeRefIdx = Math.min(refIdx, Math.max(0, pages.length - 1));
+
+  const title = item.translation ? `${item.name}  ·  ${item.translation}` : item.name;
+  $('viewerTitle').textContent = title;
+
+  const metaParts = [cat.name];
+  const pl = allPagesLabel(item);
+  if (pl) metaParts.push(pl);
+  if (item.note) metaParts.push(item.note);
+  $('viewerMeta').textContent = metaParts.join(' · ');
+
+  // page-ref strip
+  updateViewerStrip(item);
+
+  if (!pages.length) {
+    $('viewerControls').style.display = 'none';
+    showSignInfo(item);
+    return;
+  }
+
+  const ref = pages[state.activeRefIdx];
+  // Image ref
+  if (ref.url) {
+    $('viewerControls').style.display = 'none';
+    showImageRef(ref);
+    return;
+  }
+  // PDF ref
+  if (!state.pdfDoc) {
+    $('viewerControls').style.display = 'none';
+    showSignInfo(item);
+    return;
+  }
+  if (bookToPdf(ref.from) > state.pdfDoc.numPages) {
+    $('viewerControls').style.display = 'none';
+    showSignInfo(item);
+    return;
+  }
+  $('viewerControls').style.display = '';
+  const pdfFrom = bookToPdf(ref.from);
+  const pdfTo   = ref.to ? bookToPdf(ref.to) : pdfFrom;
+  renderPDFRange(pdfFrom, pdfTo);
+}
+
+function updateViewerStrip(item) {
+  item = item || (state.activeSignId ? findSign(state.activeSignId)?.item : null);
+  const strip = $('pageRefStrip');
+  if (!item || !item.pages || item.pages.length <= 1) { strip.style.display = 'none'; return; }
+
+  strip.style.display = '';
+  strip.innerHTML = `<span class="page-ref-strip-label">Pagina's:</span>` +
+    item.pages.map((ref, i) =>
+      `<button class="strip-btn ${i === state.activeRefIdx ? 'active' : ''}" data-ref-idx="${i}" type="button">${esc(refLabel(ref))}</button>`
+    ).join('');
+}
+
+function showSignInfo(item) {
+  const pages = item.pages || [];
+  let html = `<div class="empty-state">`;
+  if (!pages.length) {
+    html += `<svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><circle cx="48" cy="48" r="38" stroke="currentColor" stroke-width="1.6"/><path d="M30 60c2-6 9-10 18-10s16 4 18 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+    html += `<h2>${esc(item.name)}</h2>`;
+    if (item.translation) html += `<p>${esc(item.translation)}</p>`;
+    if (item.note) html += `<p style="font-style:italic">${esc(item.note)}</p>`;
+    html += `<p style="margin-top:14px;color:var(--ink-faint);font-size:13px">Geen paginareferenties voor dit sign.</p>`;
+  } else if (!state.pdfDoc) {
+    if (document.getElementById('pdfProgressBar')) {
+      showPDFLoading(parseInt(document.getElementById('pdfProgressPct')?.textContent || '8'));
+      return;
+    }
+    html += `<svg class="empty-illustration" viewBox="0 0 96 96" fill="none"><rect x="22" y="18" width="52" height="60" rx="3" stroke="currentColor" stroke-width="2"/><path d="M32 32h32M32 42h32M32 52h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+    html += `<h2>${esc(item.name)}</h2>`;
+    if (item.translation) html += `<p>${esc(item.translation)}</p>`;
+    html += `<div class="pagenum">${esc(allPagesLabel(item))}</div>`;
+    html += `<p>Laad het handboek (PDF) om de pagina's te bekijken.</p>`;
+    html += `<div class="actions"><label class="file-picker"><input type="file" accept="application/pdf" class="pdf-input-inline"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Laad PDF</label></div>`;
+  } else {
+    html += `<h2>${esc(item.name)}</h2><div class="pagenum">${esc(allPagesLabel(item))}</div><p style="color:var(--warm)">Pagina valt buiten het handboek (${state.pdfDoc.numPages} p.).</p>`;
+  }
+  html += `</div>`;
+  $('viewerFrame').innerHTML = html;
+  wirePdfInputs();
+}
+
+async function renderPDFPage(pageNum) {
+  await renderPDFRange(pageNum, pageNum);
+}
+
+async function renderPDFRange(fromPage, toPage) {
+  if (!state.pdfDoc) return;
+  fromPage = Math.max(1, Math.min(fromPage, state.pdfDoc.numPages));
+  toPage   = Math.max(fromPage, Math.min(toPage || fromPage, state.pdfDoc.numPages));
+  state.currentPage = fromPage;
+
+  const frame = $('viewerFrame');
+  frame.innerHTML = '';
+
+  const numPages = toPage - fromPage + 1;
+  const pad = 24;
+  // Use getBoundingClientRect for accurate visible dimensions after clearing content
+  const rect = frame.getBoundingClientRect();
+  const frameW = rect.width  - pad;
+  const frameH = rect.height - pad;
+
+  // Fetch all pages first to compute combined dimensions
+  const pages = [];
+  for (let p = fromPage; p <= toPage; p++) {
+    pages.push(await state.pdfDoc.getPage(p));
+  }
+
+  const gap = 12; // gap between pages in px
+  const maxW = Math.max(...pages.map(pg => pg.getViewport({scale:1}).width));
+  const totalH = pages.reduce((sum, pg) => sum + pg.getViewport({scale:1}).height, 0)
+               + gap * (numPages - 1);
+
+  // Scale so all pages fit in the visible area (both width and total height)
+  const scaleByW = frameW / maxW;
+  const scaleByH = frameH / totalH;
+  const fitScale = Math.min(scaleByW, scaleByH) * state.zoom * 1.44;
+
+  for (const page of pages) {
+    const vp = page.getViewport({ scale: fitScale });
+    const dpr = window.devicePixelRatio || 1;
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'pdf-canvas';
+    canvas.width  = Math.floor(vp.width  * dpr);
+    canvas.height = Math.floor(vp.height * dpr);
+    canvas.style.width  = Math.floor(vp.width)  + 'px';
+    canvas.style.height = Math.floor(vp.height) + 'px';
+    frame.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  }
+
+  $('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
+}
+
+// ══════════════════════════════════════════════
+// PAGE PICKER
+// ══════════════════════════════════════════════
+const picker = {
+  page: 1, zoom: 1, form: null, actField: null, refIdx: null,
+
+  open(startPage, form, actField, refIdx) {
+    if (!state.pdfDoc) return;
+    this.page = startPage ? bookToPdf(startPage) : 1; this.form = form;
+    this.actField = actField; this.refIdx = refIdx;
+    this.zoom = 1;
+
+    const div = document.createElement('div');
+    div.className = 'picker-overlay'; div.id = 'pickerOverlay';
+    div.innerHTML = `
+      <div class="picker-box">
+        <div class="picker-header">
+          <div><h3>Kies een pagina</h3><p>Blader door het handboek en klik op "Gebruik deze pagina".</p></div>
+          <button class="picker-close" id="pClose" type="button"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+        </div>
+        <div class="picker-nav">
+          <button class="ctrl-btn" id="pPrev" type="button"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 11L4.5 7l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="ctrl-btn" id="pNext" type="button"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5.5 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="picker-page-input">
+            <span>Pagina</span>
+            <input type="number" id="pNum" min="1" max="${state.pdfDoc.numPages}" value="${this.page}">
+            <span>van ${state.pdfDoc.numPages}</span>
+          </div>
+          <button class="ctrl-btn" id="pZOut" type="button"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+          <button class="ctrl-btn" id="pZIn" type="button"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+          <div class="picker-select-btns">
+            <button class="btn btn-primary" id="pConfirm" type="button">Gebruik boekpagina <span id="pLabel">${pdfToBook(this.page)}</span></button>
+          </div>
+        </div>
+        <div class="picker-body" id="pBody"><div class="empty-state"><div class="spinner"></div></div></div>
+        <div class="picker-footer">
+          <div class="picker-info" id="pInfo">Geselecteerde pagina: <strong>${this.page}</strong></div>
+          <button class="btn btn-ghost" id="pCancel" type="button">Annuleer</button>
+        </div>
+      </div>`;
+    document.body.appendChild(div);
+
+    div.querySelector('#pClose').onclick = () => this.close();
+    div.querySelector('#pCancel').onclick = () => this.close();
+    div.querySelector('#pConfirm').onclick = () => this.confirm();
+    div.querySelector('#pPrev').onclick = () => this.go(this.page - 1);
+    div.querySelector('#pNext').onclick = () => this.go(this.page + 1);
+    div.querySelector('#pZIn').onclick = () => { this.zoom = Math.min(2, this.zoom + .2); this.draw(); };
+    div.querySelector('#pZOut').onclick = () => { this.zoom = Math.max(.4, this.zoom - .2); this.draw(); };
+    div.querySelector('#pNum').addEventListener('change', e => {
+      const v = parseInt(e.target.value);
+      if (v >= 1 && v <= state.pdfDoc.numPages) this.go(v);
+    });
+    div.querySelector('#pBody').onclick = () => this.confirm();
+    div.onclick = e => { if (e.target === div) this.close(); };
+
+    this._key = e => {
+      if (e.key==='Escape') this.close();
+      if (e.key==='ArrowLeft') this.go(this.page-1);
+      if (e.key==='ArrowRight') this.go(this.page+1);
+      if (e.key==='Enter') this.confirm();
+    };
+    document.addEventListener('keydown', this._key);
+    this.draw();
+  },
+
+  async draw() {
+    const body = document.getElementById('pBody'); if (!body) return;
+    let canvas = body.querySelector('.picker-canvas');
+    if (!canvas) {
+      body.innerHTML = '';
+      canvas = document.createElement('canvas');
+      canvas.className = 'picker-canvas'; canvas.title = 'Klik om te gebruiken';
+      body.appendChild(canvas);
+    }
+    canvas.style.opacity = '.4';
+    const page = await state.pdfDoc.getPage(this.page);
+    const bvp = page.getViewport({ scale:1 });
+    const fit = Math.min(1.8, (body.clientWidth - 40) / bvp.width);
+    const vp = page.getViewport({ scale: fit * this.zoom });
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(vp.width * dpr);
+    canvas.height = Math.floor(vp.height * dpr);
+    canvas.style.width = Math.floor(vp.width) + 'px';
+    canvas.style.height = Math.floor(vp.height) + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    await page.render({ canvasContext:ctx, viewport:vp }).promise;
+    canvas.style.opacity = '1';
+    const n = document.getElementById('pNum'), l = document.getElementById('pLabel');
+    const inf = document.getElementById('pInfo');
+    const pv = document.getElementById('pPrev'), nx = document.getElementById('pNext');
+    if (n) n.value = this.page;
+    if (l) l.textContent = pdfToBook(this.page);
+    if (inf) inf.innerHTML = `Boekpagina: <strong>${pdfToBook(this.page)}</strong> (PDF p. ${this.page})`;
+    if (pv) pv.disabled = this.page <= 1;
+    if (nx) nx.disabled = this.page >= state.pdfDoc.numPages;
+  },
+
+  go(p) {
+    this.page = Math.max(1, Math.min(p, state.pdfDoc ? state.pdfDoc.numPages : 1));
+    this.draw();
+  },
+
+  confirm() {
+    if (!this.form) { this.close(); return; }
+    // find the right row and field
+    const row = this.form.querySelector(`.page-ref-row[data-ref-idx="${this.refIdx}"]`);
+    if (row) {
+      const input = row.querySelector(this.actField === 'from' ? '.from-input' : '.to-input');
+      if (input) input.value = pdfToBook(this.page);
+    }
+    toast(`Boekpagina ${pdfToBook(this.page)} gekozen`, 'success');
+    this.close();
+  },
+
+  close() {
+    const el = document.getElementById('pickerOverlay');
+    if (el) el.remove();
+    if (this._key) { document.removeEventListener('keydown', this._key); this._key = null; }
+    this.form = null;
+  }
+};
+
+// ══════════════════════════════════════════════
+// EVENT WIRING
+// ══════════════════════════════════════════════
+$('content').addEventListener('click', e => {
+  // inside edit form
+  const form = e.target.closest('.edit-form');
+  if (form) {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const act = btn.dataset.act;
+
+    if (act === 'edit-cancel') {
+      const signId = form.dataset.signId;
+      const found = findSign(signId);
+      if (found && found.item.name === 'Nieuw sign' && !found.item.pages.length && !found.item.translation && !found.item.note) {
+        found.category.items = found.category.items.filter(it => it.id !== signId);
+        persist();
+      }
+      state.editingSignId = null; renderIndex(); return;
+    }
+    if (act === 'edit-save') { saveEditForm(form); return; }
+
+    if (act === 'add-ref') {
+      // Add new page-ref row to form dynamically
+      const list = form.querySelector('.pages-list');
+      const existingRows = list.querySelectorAll('.page-ref-row');
+      const idx = existingRows.length;
+      const maxP = state.pdfDoc ? state.pdfDoc.numPages : 999;
+      const hasPdf = !!state.pdfDoc;
+      const dis = hasPdf ? '' : 'disabled';
+      const empty = list.querySelector('.pages-empty');
+      if (empty) empty.remove();
+      const row = document.createElement('div');
+      row.className = 'page-ref-row'; row.dataset.refIdx = idx; row.dataset.refType = 'pdf';
+      row.innerHTML = `
+        <select class="ref-type-select" style="flex-shrink:0;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px;color:var(--ink-soft);cursor:pointer;max-width:100px">
+          <option value="pdf" selected>PDF pagina</option>
+          <option value="image">Afbeelding</option>
+        </select>
+        <div class="pf">
+          <input type="number" class="from-input" min="1" max="${maxP}" placeholder="van">
+          <button class="pick-btn" data-act="pick-from" data-ref-idx="${idx}" ${dis} type="button">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Kies
+          </button>
+        </div>
+        <span class="pf-sep">t/m (opt.)</span>
+        <div class="pf">
+          <input type="number" class="to-input" min="1" max="${maxP}" placeholder="—">
+          <button class="pick-btn" data-act="pick-to" data-ref-idx="${idx}" ${dis} type="button">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Kies
+          </button>
+        </div>
+        <button class="del-ref-btn" data-act="del-ref" data-ref-idx="${idx}" type="button" title="Verwijder">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>`;
+      list.appendChild(row);
+      row.querySelector('.from-input').focus();
+      return;
+    }
+
+    if (act === 'del-ref') {
+      const row = btn.closest('.page-ref-row');
+      if (row) {
+        row.remove();
+        // re-index remaining rows
+        form.querySelectorAll('.page-ref-row').forEach((r, i) => {
+          r.dataset.refIdx = i;
+          r.querySelectorAll('[data-ref-idx]').forEach(el => el.dataset.refIdx = i);
+        });
+      }
+      return;
+    }
+
+    if (act === 'pick-from' || act === 'pick-to') {
+      const refIdx = parseInt(btn.dataset.refIdx);
+      const row = form.querySelector(`.page-ref-row[data-ref-idx="${refIdx}"]`);
+      const field = act === 'pick-from' ? 'from' : 'to';
+      const curVal = parseInt(row?.querySelector(field==='from'?'.from-input':'.to-input')?.value) || null;
+      // start picker at current value or at from value (for 'to')
+      let startP = curVal;
+      if (!startP && field==='to') startP = parseInt(row?.querySelector('.from-input')?.value) || 1;
+      picker.open(startP || 1, form, field, refIdx);
+      return;
+    }
+    return;
+  }
+
+  // category actions
+  const catBtn = e.target.closest('[data-act^="cat-"]');
+  if (catBtn) {
+    const catEl = catBtn.closest('[data-cat-id]');
+    if (catEl) { e.stopPropagation(); handleCatAction(catBtn.dataset.act, catEl.dataset.catId); return; }
+  }
+
+  // global add buttons
+  const addBtn = e.target.closest('[data-act]');
+  if (addBtn) {
+    if (addBtn.dataset.act === 'add-sign') { addNewSign(addBtn.dataset.catId); return; }
+    if (addBtn.dataset.act === 'add-cat')  { addNewCategory(); return; }
+  }
+
+  // sign action buttons
+  const signBtn = e.target.closest('[data-act^="sign-"]');
+  if (signBtn) {
+    const li = signBtn.closest('[data-sign-id]');
+    if (li) { e.stopPropagation(); handleSignAction(signBtn.dataset.act, li.dataset.signId, li.dataset.catId); return; }
+  }
+
+  // page badge click → jump to that ref
+  const badge = e.target.closest('.page-badge[data-ref-idx]');
+  if (badge) {
+    const li = badge.closest('[data-sign-id]');
+    if (li) {
+      const found = findSign(li.dataset.signId);
+      if (found) { showSign(found.item, found.category, parseInt(badge.dataset.refIdx)); renderIndex(); }
+      return;
+    }
+  }
+
+  // sign row click → show in viewer
+  const signLi = e.target.closest('.sign');
+  if (signLi) {
+    const found = findSign(signLi.dataset.signId);
+    if (found) {
+      showSign(found.item, found.category, 0);
+      renderIndex();
+    }
+  }
+});
+
+$('content').addEventListener('submit', e => {
+  if (e.target.classList.contains('edit-form')) { e.preventDefault(); saveEditForm(e.target); }
+});
+
+// page-ref strip click
+$('pageRefStrip').addEventListener('click', e => {
+  const btn = e.target.closest('.strip-btn[data-ref-idx]');
+  if (!btn) return;
+  const refIdx = parseInt(btn.dataset.refIdx);
+  const found = state.activeSignId ? findSign(state.activeSignId) : null;
+  if (!found) return;
+  state.activeRefIdx = refIdx;
+  const ref = found.item.pages[refIdx];
+  if (ref && state.pdfDoc && bookToPdf(ref.from) <= state.pdfDoc.numPages) {
+    const pdfFrom = bookToPdf(ref.from);
+    const pdfTo   = ref.to ? bookToPdf(ref.to) : pdfFrom;
+    renderPDFRange(pdfFrom, pdfTo);
+    updateViewerStrip(found.item);
+    renderIndex();
+  }
+});
+
+// edit toggle
+function setEditMode(on) {
+  state.editMode = on;
+  document.body.classList.toggle('edit-mode', on);
+  $('settingsBtn').style.display = on ? '' : 'none';
+  if (!on) state.editingSignId = null;
+  renderIndex();
+}
+
+$('editToggle').addEventListener('click', () => {
+  if (state.editMode) {
+    setEditMode(false);
+    toast('Bewerk-modus uit');
+  } else {
+    showPasswordModal();
+  }
+});
+
+function showPasswordModal() {
+  const overlay = document.createElement('div');
+  overlay.id = 'pwOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(29,35,51,.55);z-index:300;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);animation:fadeIn .15s ease';
+  overlay.innerHTML = `
+    <div style="background:var(--paper);border-radius:12px;box-shadow:0 24px 64px -16px rgba(29,35,51,.36);width:min(380px,90%);padding:32px;display:flex;flex-direction:column;gap:18px;animation:slideUp .18s ease">
+      <div>
+        <div style="font-family:Fraunces,serif;font-size:22px;font-weight:500;color:var(--ink);margin-bottom:6px">Beveiligd</div>
+        <div style="font-size:13.5px;color:var(--ink-soft);line-height:1.45">Voer het wachtwoord in om de bewerk-modus te openen.</div>
+      </div>
+      <input id="pwInput" type="password" placeholder="Wachtwoord"
+        style="padding:10px 14px;border:1px solid var(--line);border-radius:6px;font-size:15px;background:#fff;color:var(--ink);outline:none;transition:border-color .12s">
+      <div id="pwError" style="color:var(--warm);font-size:13px;display:none">Onjuist wachtwoord.</div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button id="pwCancel" type="button" style="padding:8px 16px;border:1px solid var(--line);background:transparent;border-radius:6px;cursor:pointer;font:inherit;font-size:13.5px;color:var(--ink)">Annuleer</button>
+        <button id="pwConfirm" type="button" style="padding:8px 16px;background:var(--accent);color:white;border:none;border-radius:6px;cursor:pointer;font:inherit;font-size:13.5px;font-weight:500">Bevestig</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const inp = overlay.querySelector('#pwInput');
+  const err = overlay.querySelector('#pwError');
+  setTimeout(() => inp.focus(), 50);
+  async function tryPassword() {
+    const ok = await checkPw(inp.value);
+    if (ok) {
+      overlay.remove();
+      setEditMode(true);
+      toast('Bewerk-modus aan');
+    } else {
+      err.style.display = 'block';
+      inp.value = '';
+      inp.focus();
+    }
+  }
+  overlay.querySelector('#pwConfirm').onclick = tryPassword;
+  overlay.querySelector('#pwCancel').onclick = () => overlay.remove();
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') tryPassword(); if (e.key === 'Escape') overlay.remove(); });
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+}
+
+// search
+$('search').addEventListener('input', e => { state.searchFilter = e.target.value; renderIndex(); });
+$('search').addEventListener('keydown', e => { if (e.key==='Escape') { e.target.value=''; state.searchFilter=''; renderIndex(); } });
+$('searchClear').addEventListener('click', () => { $('search').value=''; state.searchFilter=''; renderIndex(); $('search').focus(); });
+
+// settings menu
+$('settingsBtn').addEventListener('click', e => { e.stopPropagation(); $('settingsMenu').classList.toggle('show'); });
+document.addEventListener('click', e => { if (!e.target.closest('#settingsMenu') && !e.target.closest('#settingsBtn')) $('settingsMenu').classList.remove('show'); });
+
+$('exportBtn').addEventListener('click', () => {
+  $('settingsMenu').classList.remove('show');
+  const blob = new Blob([JSON.stringify(state.data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href=url; a.download=`senas-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
+  toast('Geëxporteerd','success');
+});
+
+$('publishBtn').addEventListener('click', async () => {
+  $('settingsMenu').classList.remove('show');
+  try {
+    const resp = await fetch(location.href);
+    let html = await resp.text();
+    const newData = JSON.stringify(state.data);
+    html = html.replace(/\/\*DATA_START\*\/[\s\S]*?\/\*DATA_END\*\//, '/*DATA_START*/' + newData + '/*DATA_END*/');
+    const blob = new Blob([html], {type:'text/html'});
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = 'index.html'; a.click(); URL.revokeObjectURL(url);
+    toast('index.html gedownload — upload naar GitHub', 'success');
+  } catch(e) {
+    toast('Kon pagina niet ophalen', 'error');
+  }
+});
+$('importBtn').addEventListener('click', () => { $('settingsMenu').classList.remove('show'); $('importInput').click(); });
+$('importInput').addEventListener('change', async e => {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    const parsed = JSON.parse(await file.text());
+    if (!parsed.categories) throw new Error('Verkeerd formaat');
+    if (!confirm('Huidige lijst vervangen?')) return;
+    migrate(parsed); state.data = parsed; persist(); renderIndex(); toast('Geïmporteerd','success');
+  } catch(err) { toast('Kon JSON niet lezen','error'); }
+  e.target.value='';
+});
+$('reloadPdfMenuItem').addEventListener('click', () => { $('settingsMenu').classList.remove('show'); $('pdfInputChange').click(); });
+$('resetBtn').addEventListener('click', () => {
+  $('settingsMenu').classList.remove('show');
+  if (!confirm('Lijst terugzetten naar standaard? Al je aanpassingen verdwijnen.')) return;
+  state.data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  state.activeSignId = null; state.editingSignId = null;
+  persist(); renderIndex(); $('pageRefStrip').style.display='none'; toast('Standaardlijst hersteld','success');
+});
+
+$('changePwBtn').addEventListener('click', () => {
+  $('settingsMenu').classList.remove('show');
+  showChangePwModal();
+});
+
+function showChangePwModal() {
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(29,35,51,.55);z-index:300;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);animation:fadeIn .15s ease';
+  ov.innerHTML = `
+    <div style="background:var(--paper);border-radius:12px;box-shadow:0 24px 64px -16px rgba(29,35,51,.36);width:min(400px,90%);padding:32px;display:flex;flex-direction:column;gap:16px;animation:slideUp .18s ease">
+      <div>
+        <div style="font-family:Fraunces,serif;font-size:22px;font-weight:500;color:var(--ink);margin-bottom:6px">Wachtwoord wijzigen</div>
+        <div style="font-size:13px;color:var(--ink-soft);line-height:1.45">Het wachtwoord wordt versleuteld opgeslagen — nooit als leesbare tekst.</div>
+      </div>
+      <div>
+        <label style="font-size:11px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);display:block;margin-bottom:4px">Huidig wachtwoord</label>
+        <input id="cpCurrent" type="password" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;background:#fff;color:var(--ink);outline:none">
+      </div>
+      <div>
+        <label style="font-size:11px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);display:block;margin-bottom:4px">Nieuw wachtwoord</label>
+        <input id="cpNew" type="password" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;background:#fff;color:var(--ink);outline:none">
+      </div>
+      <div>
+        <label style="font-size:11px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);display:block;margin-bottom:4px">Herhaal nieuw wachtwoord</label>
+        <input id="cpRepeat" type="password" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;background:#fff;color:var(--ink);outline:none">
+      </div>
+      <div id="cpErr" style="color:var(--warm);font-size:13px;display:none;padding:8px 12px;background:var(--warm-soft);border-radius:5px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px">
+        <button id="cpCancel" type="button" style="padding:8px 16px;border:1px solid var(--line);background:transparent;border-radius:6px;cursor:pointer;font:inherit;font-size:13.5px">Annuleer</button>
+        <button id="cpSave" type="button" style="padding:8px 16px;background:var(--accent);color:white;border:none;border-radius:6px;cursor:pointer;font:inherit;font-size:13.5px;font-weight:500">Opslaan</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  const cur = ov.querySelector('#cpCurrent');
+  const nw  = ov.querySelector('#cpNew');
+  const rep = ov.querySelector('#cpRepeat');
+  const err = ov.querySelector('#cpErr');
+  setTimeout(() => cur.focus(), 50);
+
+  function showErr(msg) { err.textContent = msg; err.style.display = 'block'; }
+  function hideErr() { err.style.display = 'none'; }
+
+  async function trySave() {
+    hideErr();
+    if (!cur.value) { showErr('Voer je huidige wachtwoord in.'); cur.focus(); return; }
+    if (!nw.value)  { showErr('Voer een nieuw wachtwoord in.'); nw.focus(); return; }
+    if (nw.value !== rep.value) { showErr('Nieuwe wachtwoorden komen niet overeen.'); rep.focus(); return; }
+    if (nw.value.length < 4) { showErr('Kies een wachtwoord van minimaal 4 tekens.'); nw.focus(); return; }
+    const curOk = await checkPw(cur.value);
+    if (!curOk) { showErr('Huidig wachtwoord is onjuist.'); cur.value=''; cur.focus(); return; }
+    const newHash = await hashPw(nw.value);
+    localStorage.setItem('signs-pw-hash', newHash);
+    ov.remove();
+    toast('Wachtwoord opgeslagen', 'success');
+  }
+
+  ov.querySelector('#cpSave').onclick = trySave;
+  ov.querySelector('#cpCancel').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  [cur, nw, rep].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') trySave(); if (e.key === 'Escape') ov.remove(); }));
+}
+
+// pdf controls
+function reRenderCurrentRef() {
+  if (!state.activeSignId) return;
+  const found = findSign(state.activeSignId);
+  if (!found) return;
+  const ref = (found.item.pages || [])[state.activeRefIdx];
+  if (!ref) return;
+  if (ref.url) { showImageRef(ref); return; }  // image ref — re-show image
+  if (!state.pdfDoc) return;
+  const pdfFrom = bookToPdf(ref.from);
+  const pdfTo   = ref.to ? bookToPdf(ref.to) : pdfFrom;
+  renderPDFRange(pdfFrom, pdfTo);
+}
+
+
+$('zoomIn').addEventListener('click',  () => { state.zoom = Math.min(2.5, state.zoom + .15); reRenderCurrentRef(); });
+$('zoomOut').addEventListener('click', () => { state.zoom = Math.max(.5,  state.zoom - .15); reRenderCurrentRef(); });
+
+
+
+$('pdfInputChange').addEventListener('change', e => { if (e.target.files[0]) handlePDFFile(e.target.files[0]); e.target.value=''; });
+$('backBtn').addEventListener('click', () => document.body.classList.remove('viewer-open'));
+
+let _rz;
+window.addEventListener('resize', () => { clearTimeout(_rz); _rz = setTimeout(() => reRenderCurrentRef(), 200); });
+
+// ══════════════════════════════════════════════
+// MIGRATION (old format → pages array)
+// ══════════════════════════════════════════════
+function migrate(data) {
+  for (const cat of data.categories||[]) {
+    for (const it of cat.items||[]) {
+      if (!it.pages) {
+        it.pages = it.page != null ? [{ from: it.page, ...(it.pageEnd ? { to: it.pageEnd } : {}) }] : [];
+        delete it.page; delete it.pageEnd;
+      }
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+async function init() {
+  Storage.init();
+  const saved = Storage.load();
+  state.data = saved || JSON.parse(JSON.stringify(DEFAULT_DATA));
+  migrate(state.data);
+  renderIndex();
+  await tryAutoLoad();
+  // Select first sign by default
+}
+
+init();
+</script>
+</body>
+</html>
